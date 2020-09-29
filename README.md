@@ -11,28 +11,21 @@ If the peripheral is not currently supported, the library is written in a modula
 For basic usage, you will need to:
 
 * Enable the type of devices you want to connect to
-
 * Register a callback to be notified when a connection happens
 
 ```
 #include "ble-device-gateway.h"
 
 void setup() {
-
   BleDeviceGateway::instance().setup();
-
   BleDeviceGateway::instance().onConnectCallback(onConnect);
-
   BleDeviceGateway::instance().enableService(JUMPER_PULSEOX_SERVICE);
-
   BleDeviceGateway::instance().enableService(BLE_SIG_UUID_HEART_RATE_SVC);
-
+  BleDeviceGateway::instance().enableService(BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);
 }
 
 void loop() {
-
   BleDeviceGateway::instance().loop();
-
 }
 ```
 
@@ -40,37 +33,33 @@ The callback function for when a device is connected has the device class as the
 
 ```
 void onConnect(BleDevice& device)
-
 {
-
   if (device.getType() == BleUuid(JUMPER_PULSEOX_SERVICE))  {
-
     Log.info("Connected to Jumper Pulse Oximeter");
-
-  }
-
-  if (device.getType() == BleUuid(BLE_SIG_UUID_HEART_RATE_SVC))
-
+  } else if (device.getType() == BleUuid(BLE_SIG_UUID_HEART_RATE_SVC))
   {
-
     HeartRateMonitor& dev = (HeartRateMonitor&)device;
-
+    dev.setNewValueCallback(onNewHrValue, NULL);
     uint8_t buf[20];
-
     if (dev.getManufacturerName(buf, 20) > -1) {
-
       Log.info("Connected to Heart Rate Monitor named: %s", buf);
-
     }
-
     Log.info("Battery Level: %d", dev.getBatteryLevel());
-
   }
-
 }
 ```
 
-Here is where you also would add the capabilities that your application needs. For example, a Heart Rate Monitor typically notifies once per second of the heart rate, so the Heart Rate Monitor type in the library has an API to register a callback to receive the notifications.
+Here is where you also would add the capabilities that your application needs. For example, a Heart Rate Monitor typically notifies once per second of the heart rate, so the Heart Rate Monitor type in the library has an API to register a callback to receive the notifications. The battery level is usually notified only when it changes. For example:
+
+```
+void onNewHrValue(HeartRateMonitor& monitor, BleUuid uuid, void* context) {
+  if (uuid == BLE_SIG_HEART_RATE_MEASUREMENT_CHAR) {
+    //Log.info("Heart Rate: %u", monitor.getHeartRate() );
+  } else if (uuid == BLE_SIG_BATTERY_LEVEL_CHAR) {
+    Log.info("Battery callback level: %d", monitor.getBatteryLevel() );
+  } 
+}
+```
 
 Another device might instead allow you to read or write to it. In that case, the type for that device would have APIs to allow you to do that within your application.
 
@@ -79,17 +68,13 @@ Another device might instead allow you to read or write to it. In that case, the
 The BLE specification takes a modular approach to building a device. Peripherals are structured like this:
 
 * Peripheral includes one or more services
-
 * Service includes one or more characteristics
-
 * Characteristic data may be written to, read from (polled), or sent from the device (pushed). A characteristic may support one or more of these methods of data transfer
 
 This library takes a similar modular approach with the following goals:
 
 * Application only needs to know about the peripheral type APIs
-
 * Characteristics and services can be reused when adding peripheral types
-
 * Easily add new peripheral types, characteristics, or services
 
 ### Characteristics
@@ -109,17 +94,11 @@ The top-level is the definition of peripheral types, and can be found in the `sr
 To add a new type of device to connect to, follow these steps:
 
 * Create any needed characteristics in `src/characteristics`
-
 * Create any needed services in src/services
-
 * In `src/types/`, derive the BleDevice class
-
 * In `src/types/ble-types.h`, include the new header file, add new device type pointer creation to the `if...then...else` statements
-
 * The derived BleDevice class should expose methods to read/set characteristics as appropriate
-
 * If a characteristic is `NOTIFY` or `INDICATE`, the class should have a `setNewValueCallback()` function, which accepts a callback to be called when there’s a new value
-
 * Consider adding a `setAlert()` function, and implement the logic in `loop()`, to minimize application complexity
 
 
