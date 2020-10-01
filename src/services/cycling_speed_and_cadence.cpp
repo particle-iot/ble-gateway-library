@@ -12,10 +12,11 @@ void CyclingSpeedAndCadenceService::onConnect()
                     _cscMeasurement->onConnect();
                     enableNotification();
                     break;
-                /*case BLE_SIG_BODY_SENSOR_LOCATION_CHAR:
-                    _sensorLocation = std::make_unique<BodySensorLocation>(ch);
+                case BLE_SIG_CSC_FEATURE_CHAR:
+                    _cscFeature = std::make_unique<CSCFeatureChar>(ch);
+                    _cscFeature->onConnect();
                     break;
-                case BLE_SIG_HEART_RATE_CONTROL_POINT_CHAR:
+                /*case BLE_SIG_HEART_RATE_CONTROL_POINT_CHAR:
                     _controlPoint = std::make_unique<HeartRateControlPoint>(ch);
                     break; */
                 default:

@@ -26,7 +26,7 @@ public:
     // Data from Heart Rate Service
     uint16_t getHeartRate() {return (hrService) ? hrService->getHeartRate() : 0;}
     uint16_t getEnergyExpended() {return (hrService) ? hrService->getEnergyExpended() : 0;}
-    SensorLocation getSensorLocation() {return (hrService) ? hrService->getSensorLocation() : SensorLocation::ERROR;}
+    BodySensorLocation::SensorLocation getSensorLocation() {return (hrService) ? hrService->getSensorLocation() : BodySensorLocation::SensorLocation::ERROR;}
     int resetEnergyExpended() {return (hrService) ? hrService->resetEnergyExpended() : -1;}
 
     // Data from Device Information Service

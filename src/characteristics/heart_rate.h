@@ -68,22 +68,21 @@ public:
     ~HeartRateMeasurement() {};
 };
 
-enum SensorLocation: uint8_t {
-    OTHER       = 0,
-    CHEST       = 1,
-    WRIST       = 2,
-    FINGER      = 3,
-    HAND        = 4,
-    EAR_LOBE    = 5,
-    FOOT        = 6,
-    ERROR       = 0x80
-};
-
 class BodySensorLocation 
 {
 private:
     BleCharacteristic _characteristic;
 public:
+    enum SensorLocation: uint8_t {
+        OTHER       = 0,
+        CHEST       = 1,
+        WRIST       = 2,
+        FINGER      = 3,
+        HAND        = 4,
+        EAR_LOBE    = 5,
+        FOOT        = 6,
+        ERROR       = 0x80
+    };
     SensorLocation read() {
         uint8_t buf;
         return (_characteristic.getValue(&buf, 1) == 1) ? (SensorLocation)buf : SensorLocation::ERROR; 

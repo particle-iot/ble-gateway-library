@@ -14,7 +14,7 @@ public:
     uint16_t getHeartRate() {return (_hrMeasurement) ? _hrMeasurement->getHeartRate() : 0;}
     uint16_t getEnergyExpended() {return (_hrMeasurement) ? _hrMeasurement->getEnergyExpended() : 0;}
     void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
-    SensorLocation getSensorLocation() {return (_sensorLocation) ? _sensorLocation->read() : SensorLocation::ERROR;}
+    BodySensorLocation::SensorLocation getSensorLocation() {return (_sensorLocation) ? _sensorLocation->read() : BodySensorLocation::SensorLocation::ERROR;}
     int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}
     int enableNotification() {return (_hrMeasurement) ?_hrMeasurement->enableNotification() : -1;}
 

@@ -14,7 +14,7 @@ BleDeviceGateway *BleDeviceGateway::_instance = nullptr;
 
 void BleDeviceGateway::setup()
 {
-    _scan_period = 20;
+    _scan_period = 10;
     BLE.onDisconnected(onDisconnected, this);
 }
 

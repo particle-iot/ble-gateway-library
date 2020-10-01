@@ -44,7 +44,6 @@ void BatteryService::setNewValueCallback(void (*callback)(BleUuid, void*), void*
 
 void BatteryService::onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context) {
     BatteryService* ctx = (BatteryService *)context;
-    Log.info("Battery callback len %d, value %d", len, data[0]);
     if (len > 0) {
         ctx->_level = data[0];
         if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(BleUuid(BLE_SIG_BATTERY_LEVEL_CHAR), ctx->_notifyContext);

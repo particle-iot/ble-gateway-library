@@ -12,7 +12,7 @@ void CyclingSpeedAndCadence::onConnect()
                 cscService->onConnect();
                 cscService->setNewValueCallback(_onNewValue, this);
                 break;
-            /*case BLE_SIG_UUID_DEVICE_INFORMATION_SVC:
+            case BLE_SIG_UUID_DEVICE_INFORMATION_SVC:
                 disService = std::make_unique<DeviceInformationService>(serv);
                 disService->onConnect();
                 break;
@@ -20,7 +20,7 @@ void CyclingSpeedAndCadence::onConnect()
                 battService = std::make_unique<BatteryService>(serv);
                 battService->onConnect();
                 battService->setNewValueCallback(_onNewValue, this);
-                break; */
+                break; 
             default:
                 break;
             }
@@ -30,6 +30,22 @@ void CyclingSpeedAndCadence::onConnect()
 
 void CyclingSpeedAndCadence::_onNewValue(BleUuid uuid, void* context) {
     CyclingSpeedAndCadence* ctx = (CyclingSpeedAndCadence *)context;
+    if (uuid == BLE_SIG_CSC_MEASUREMENT_CHAR) {
+        if (ctx->wheel_rev == 0) {
+            ctx->wheel_rev = ctx->getWheelRotations();
+            ctx->timed_event = ctx->getLastWheelEvent();
+        } else {
+            if (ctx->getLastWheelEvent() - ctx->timed_event > 0) {
+                float meters = (ctx->_wheelmm)/1000.0 * (ctx->getWheelRotations()-ctx->wheel_rev);
+                float hours = ((ctx->getLastWheelEvent()-ctx->timed_event)/1024.0)/3600;
+                ctx->_speed = (uint16_t)( meters/hours );
+                ctx->wheel_rev = ctx->getWheelRotations();
+                ctx->timed_event = ctx->getLastWheelEvent();
+            } else {
+                ctx->_speed = std::max(0, ctx->_speed - 2000);
+            }
+        }
+    }
     if (ctx->_callback != nullptr) {
         ctx->_callback(*ctx, uuid, ctx->_callbackContext);
     }
