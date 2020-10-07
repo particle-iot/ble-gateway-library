@@ -1,4 +1,4 @@
-#include "types/pulse-oximeter.h"
+#include "peripherals/pulse-oximeter.h"
 
 const BleUuid pulseOxCharUuid("cdeacb81-5235-4c07-8846-93a37ee6b86d");
 

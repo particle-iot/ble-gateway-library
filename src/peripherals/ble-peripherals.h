@@ -5,10 +5,10 @@
 /** 
  * Add include files for new types here 
  */
-#include "types/pulse-oximeter.h"
-#include "types/blood-pressure-monitor.h"
-#include "types/heart-rate-monitor.h"
-#include "types/cycling-sensor.h"
+#include "peripherals/pulse-oximeter.h"
+#include "peripherals/blood-pressure-monitor.h"
+#include "peripherals/heart-rate-monitor.h"
+#include "peripherals/cycling-sensor.h"
 
 
 class BleTypes {

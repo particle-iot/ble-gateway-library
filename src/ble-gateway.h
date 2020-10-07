@@ -4,7 +4,7 @@
  */
 
 #include "Particle.h"
-#include "types/ble-types.h"
+#include "peripherals/ble-peripherals.h"
 
 class BleDeviceGateway;
 

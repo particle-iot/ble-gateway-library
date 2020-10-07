@@ -2,7 +2,10 @@
 
 This library turns a Particle Gen3 device (Tracker, Boron, Argon) into a Bluetooth Low Energy (BLE) Central device. In this mode, it is able to detect and connect to BLE Peripherals, and expose APIs so that your application can get and/or send data to the peripherals, depending on their capabilities.
 
-If the peripheral that you’d like to connect to is already supported by the library, you can use this without any modifications.
+If the peripheral that you’d like to connect to is already supported by the library, you can use this without any modifications. Here's a list of peripherals currently supported:
+* Heart Rate Monitor
+* Cycling Speed and Cadence Sensor
+* Jumper brand Pulse Oximeter
 
 If the peripheral is not currently supported, the library is written in a modular format so that it is easy to add your peripheral.
 
@@ -13,7 +16,7 @@ For basic usage, you will need to:
 * Enable the type of devices you want to connect to
 * Register a callback to be notified when a connection happens
 
-```
+```c++
 #include "ble-device-gateway.h"
 
 void setup() {
@@ -31,7 +34,7 @@ void loop() {
 
 The callback function for when a device is connected has the device class as the parameter. You can find out what type of device it is by checking the `getType()` function, like this:
 
-```
+```c++
 void onConnect(BleDevice& device)
 {
   if (device.getType() == BleUuid(JUMPER_PULSEOX_SERVICE))  {
@@ -49,9 +52,9 @@ void onConnect(BleDevice& device)
 }
 ```
 
-Here is where you also would add the capabilities that your application needs. For example, a Heart Rate Monitor typically notifies once per second of the heart rate, so the Heart Rate Monitor type in the library has an API to register a callback to receive the notifications. The battery level is usually notified only when it changes. For example:
+Here is where you also would add the capabilities that your application needs. For example, a Heart Rate Monitor typically notifies once per second of the heart rate, so the Heart Rate Monitor type in the library has an API to register a callback to receive the notifications. The battery level is usually notified only when it changes. The `NOTIFY` property is Optional for the Battery Service, while `READ` is mandatory. If you know the heart rate monitor that you're using implements `NOTIFY`, then you can also get the battery level in the same callback as the heart rate measurement. For example:
 
-```
+```c++
 void onNewHrValue(HeartRateMonitor& monitor, BleUuid uuid, void* context) {
   if (uuid == BLE_SIG_HEART_RATE_MEASUREMENT_CHAR) {
     //Log.info("Heart Rate: %u", monitor.getHeartRate() );
@@ -60,6 +63,8 @@ void onNewHrValue(HeartRateMonitor& monitor, BleUuid uuid, void* context) {
   } 
 }
 ```
+
+If you're not sure if the Heart Rate monitor supports `NOTIFY`, you can use the `bool batterySupportsNotify()` API to find out.
 
 Another device might instead allow you to read or write to it. In that case, the type for that device would have APIs to allow you to do that within your application.
 
@@ -95,8 +100,8 @@ To add a new type of device to connect to, follow these steps:
 
 * Create any needed characteristics in `src/characteristics`
 * Create any needed services in src/services
-* In `src/types/`, derive the BleDevice class
-* In `src/types/ble-types.h`, include the new header file, add new device type pointer creation to the `if...then...else` statements
+* In `src/peripherals/`, derive the BleDevice class
+* In `src/peripherals/ble-peripherals.h`, include the new header file, add new device type pointer creation to the `if...then...else` statements
 * The derived BleDevice class should expose methods to read/set characteristics as appropriate
 * If a characteristic is `NOTIFY` or `INDICATE`, the class should have a `setNewValueCallback()` function, which accepts a callback to be called when there’s a new value
 * Consider adding a `setAlert()` function, and implement the logic in `loop()`, to minimize application complexity
