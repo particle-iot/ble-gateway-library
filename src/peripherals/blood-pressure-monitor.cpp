@@ -3,9 +3,9 @@
 void BloodPressureMonitor::onConnect()
 {
     peer.discoverAllServices();
-    for (auto serv: peer.services()) {
+    for (auto& serv: peer.services()) {
         if (serv.UUID() == ORG_BLUETOOTH_SERVICE_BLOOD_PRESSURE) {
-            *bpService = static_cast<BloodPressureService>(serv);
+            bpService = std::make_unique<BloodPressureService>(serv, peer);
         }
     }
 }

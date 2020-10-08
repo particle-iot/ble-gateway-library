@@ -8,16 +8,16 @@ void CyclingSpeedAndCadence::onConnect()
             switch (serv.UUID().shorted())
             {
             case BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC:
-                cscService = std::make_unique<CyclingSpeedAndCadenceService>(serv);
+                cscService = std::make_unique<CyclingSpeedAndCadenceService>(serv, peer);
                 cscService->onConnect();
                 cscService->setNewValueCallback(_onNewValue, this);
                 break;
             case BLE_SIG_UUID_DEVICE_INFORMATION_SVC:
-                disService = std::make_unique<DeviceInformationService>(serv);
+                disService = std::make_unique<DeviceInformationService>(serv, peer);
                 disService->onConnect();
                 break;
             case BLE_SIG_UUID_BATTERY_SVC:
-                battService = std::make_unique<BatteryService>(serv);
+                battService = std::make_unique<BatteryService>(serv, peer);
                 battService->onConnect();
                 battService->setNewValueCallback(_onNewValue, this);
                 break; 

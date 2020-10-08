@@ -24,6 +24,7 @@ private:
     std::unique_ptr<BleCharacteristic> _systemID;
     std::unique_ptr<BleCharacteristic> _certificationDataList;
     std::unique_ptr<BleCharacteristic> _pnpID;
+    BlePeerDevice _peer;
 public:
     BleService service;
     void onConnect();
@@ -35,6 +36,5 @@ public:
     int getSoftwareRevision(uint8_t* buf, size_t len);
     /* TODO: Implement other functions */
 
-    DeviceInformationService(BleService serv): service(serv) {}
-    ~DeviceInformationService() {}
+    DeviceInformationService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
 };

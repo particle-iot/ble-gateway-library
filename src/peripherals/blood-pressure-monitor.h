@@ -5,7 +5,7 @@
 class BloodPressureMonitor: public BleDevice
 {
 private:
-    BloodPressureService* bpService;
+    std::unique_ptr<BloodPressureService> bpService;
 public:
     void onConnect();
     void loop() {};

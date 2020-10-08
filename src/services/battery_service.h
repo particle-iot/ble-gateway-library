@@ -10,6 +10,7 @@ class BatteryService
 {
 private:
     BleCharacteristic _batteryLevel;
+    BlePeerDevice _peer;
     uint8_t _level;
     static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
     void (*_notifyNewData)(BleUuid, void*);
@@ -22,6 +23,6 @@ public:
     bool supportsNotify();
     void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
 
-    BatteryService(BleService serv): _level(0), _notifyNewData(nullptr), service(serv) {}
+    BatteryService(BleService serv, BlePeerDevice& peer): _peer(peer), _level(0), _notifyNewData(nullptr), service(serv) {}
     ~BatteryService() {}
 };

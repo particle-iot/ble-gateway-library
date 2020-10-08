@@ -22,8 +22,10 @@ void PulseOx::onConnect()
 {
     peer.discoverAllServices();
     peer.getServiceByUUID(dataService, BleUuid(JUMPER_PULSEOX_SERVICE));
-    dataService.discoverAllCharacteristics();
-    dataService.getCharacteristicByUUID(dataChar, pulseOxCharUuid);
+    Vector<BleCharacteristic> ch = peer.discoverCharacteristicsOfService(dataService);
+    if (!peer.getCharacteristicByUUID(dataService, dataChar, pulseOxCharUuid) ) {
+        Log.info("Didn't find characteristic");
+    }
     dataChar.onDataReceived(onDataReceived, this);
     dataChar.subscribe(true);
 }

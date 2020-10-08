@@ -8,16 +8,16 @@ void HeartRateMonitor::onConnect()
             switch (serv.UUID().shorted())
             {
             case BLE_SIG_UUID_HEART_RATE_SVC:
-                hrService = std::make_unique<HeartRateService>(serv);
+                hrService = std::make_unique<HeartRateService>(serv, peer);
                 hrService->onConnect();
                 hrService->setNewValueCallback(_onNewValue, this);
                 break;
             case BLE_SIG_UUID_DEVICE_INFORMATION_SVC:
-                disService = std::make_unique<DeviceInformationService>(serv);
+                disService = std::make_unique<DeviceInformationService>(serv, peer);
                 disService->onConnect();
                 break;
             case BLE_SIG_UUID_BATTERY_SVC:
-                battService = std::make_unique<BatteryService>(serv);
+                battService = std::make_unique<BatteryService>(serv, peer);
                 battService->onConnect();
                 battService->setNewValueCallback(_onNewValue, this);
                 break;

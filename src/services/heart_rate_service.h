@@ -7,7 +7,7 @@ private:
     std::unique_ptr<HeartRateMeasurement> _hrMeasurement;
     std::unique_ptr<BodySensorLocation> _sensorLocation; 
     std::unique_ptr<HeartRateControlPoint> _controlPoint;
-
+    BlePeerDevice _peer;
 public:
     BleService service;
     void onConnect();
@@ -18,6 +18,5 @@ public:
     int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}
     int enableNotification() {return (_hrMeasurement) ?_hrMeasurement->enableNotification() : -1;}
 
-    HeartRateService(BleService serv): service(serv) {}
-    ~HeartRateService() {}
+    HeartRateService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
 };

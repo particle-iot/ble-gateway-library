@@ -1,8 +1,8 @@
 #include "services/battery_service.h"
 
 void BatteryService::onConnect() {
-    service.discoverAllCharacteristics();
-    for (auto& ch: service.characteristics()) {
+    _peer.discoverCharacteristicsOfService(service);
+    for (auto& ch: _peer.characteristics(service)) {
         if (ch.UUID().type() == BleUuidType::SHORT) {
             switch (ch.UUID().shorted())
             {

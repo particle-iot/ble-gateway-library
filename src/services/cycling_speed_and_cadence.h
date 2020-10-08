@@ -8,7 +8,7 @@ private:
     std::unique_ptr<CSCFeatureChar> _cscFeature; 
     std::unique_ptr<SensorLocation> _sensorLocation; 
     //std::unique_ptr<HeartRateControlPoint> _controlPoint;
-
+    BlePeerDevice _peer;
 public:
     BleService service;
     void onConnect();
@@ -21,6 +21,6 @@ public:
     //int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}
     int enableNotification() {return (_cscMeasurement) ?_cscMeasurement->enableNotification() : -1;}
 
-    CyclingSpeedAndCadenceService(BleService serv): service(serv) {}
+    CyclingSpeedAndCadenceService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
     ~CyclingSpeedAndCadenceService() {}
 };
