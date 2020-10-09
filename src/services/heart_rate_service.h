@@ -11,11 +11,22 @@ private:
 public:
     BleService service;
     void onConnect();
+    /**
+     *  Access data as last reported by the device 
+     */
     uint16_t getHeartRate() {return (_hrMeasurement) ? _hrMeasurement->getHeartRate() : 0;}
     uint16_t getEnergyExpended() {return (_hrMeasurement) ? _hrMeasurement->getEnergyExpended() : 0;}
-    void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
+    int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}  
     BodySensorLocation::SensorLocation getSensorLocation() {return (_sensorLocation) ? _sensorLocation->read() : BodySensorLocation::SensorLocation::ERROR;}
-    int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}
+    
+    /**
+     *  Register callback for when new data is available
+     */
+    void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
+
+    /**
+     *  Enable the heart rate sensor to start notifying data
+     */
     int enableNotification() {return (_hrMeasurement) ?_hrMeasurement->enableNotification() : -1;}
 
     HeartRateService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
