@@ -23,6 +23,6 @@ public:
     bool supportsNotify();
     void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
 
-    BatteryService(BleService serv, BlePeerDevice& peer): _peer(peer), _level(0), _notifyNewData(nullptr), service(serv) {}
+    BatteryService(BleService& serv, BlePeerDevice& peer): _peer(peer), _level(0), _notifyNewData(nullptr), service(serv) {}
     ~BatteryService() {}
 };

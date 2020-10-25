@@ -36,5 +36,5 @@ public:
     int getSoftwareRevision(uint8_t* buf, size_t len);
     /* TODO: Implement other functions */
 
-    DeviceInformationService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
+    DeviceInformationService(BleService& serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
 };

@@ -7,6 +7,10 @@ void CyclingSpeedAndCadence::onConnect()
         if (serv.UUID().type() == BleUuidType::SHORT) {
             switch (serv.UUID().shorted())
             {
+            case BLE_SIG_UUID_GENERIC_ACCESS_SVC:
+                _gapService = std::make_unique<GapGenericService>(serv, peer);
+                _gapService->onConnect();
+                break;
             case BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC:
                 cscService = std::make_unique<CyclingSpeedAndCadenceService>(serv, peer);
                 cscService->onConnect();

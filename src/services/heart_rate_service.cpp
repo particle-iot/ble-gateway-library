@@ -10,7 +10,7 @@ void HeartRateService::onConnect()
                 case BLE_SIG_HEART_RATE_MEASUREMENT_CHAR:
                     _hrMeasurement = std::make_unique<HeartRateMeasurement>(ch);
                     _hrMeasurement->onConnect();
-                    enableNotification();
+                    _hrMeasurement->enableNotification();
                     break;
                 case BLE_SIG_BODY_SENSOR_LOCATION_CHAR:
                     _sensorLocation = std::make_unique<BodySensorLocation>(ch);

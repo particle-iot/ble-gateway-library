@@ -6,18 +6,17 @@
 #define BLE_SIG_BODY_SENSOR_LOCATION_CHAR 0x2A38
 #define BLE_SIG_HEART_RATE_CONTROL_POINT_CHAR 0x2A39
 
-enum HeartRateMeasurementFlags: uint8_t {
-    NONE                                = 0,
-    HEART_RATE_VALUE_UINT16             = 0x01,
-    SENSOR_CONTACT_DETECTED             = 0x02,
-    SENSOR_CONTACT_FEATURE_SUPPORTED    = 0x04,
-    ENERGY_EXPENDED_PRESENT             = 0x08,
-    RR_INTERVAL_PRESENT                 = 0x10
-};
-
 class HeartRateMeasurement
 {
 private:
+    enum HeartRateMeasurementFlags: uint8_t {
+        NONE                                = 0,
+        HEART_RATE_VALUE_UINT16             = 0x01,
+        SENSOR_CONTACT_DETECTED             = 0x02,
+        SENSOR_CONTACT_FEATURE_SUPPORTED    = 0x04,
+        ENERGY_EXPENDED_PRESENT             = 0x08,
+        RR_INTERVAL_PRESENT                 = 0x10
+    };
     static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context) {
         HeartRateMeasurement* ctx = (HeartRateMeasurement *)context;
         size_t position = 0;
@@ -26,24 +25,24 @@ private:
                 ( ctx->_flags & HeartRateMeasurementFlags::SENSOR_CONTACT_FEATURE_SUPPORTED && 
                 ctx->_flags & HeartRateMeasurementFlags::SENSOR_CONTACT_DETECTED )){
             if (ctx->_flags & HeartRateMeasurementFlags::HEART_RATE_VALUE_UINT16 && len > (position+1)) {
-                ctx->_hr = data[position+2] << 8 | (data[position+1]);
+                ctx->_hr = data[position+1] << 8 | (data[position]);
                 position += 2;
             } else if (len > position) {
                 ctx->_hr = data[position++];
             }
         }
         if (len > position+1 && ctx->_flags & HeartRateMeasurementFlags::ENERGY_EXPENDED_PRESENT) {
-            ctx->_joules = data[position+2] << 8 | (data[position+1]);
+            ctx->_joules = data[position+1] << 8 | (data[position]);
             position += 2;
         }
         if (ctx->_flags & HeartRateMeasurementFlags::RR_INTERVAL_PRESENT) {
             ctx->_rrInterval.clear();
             while (len > position + 2) {
-                ctx->_rrInterval.append(data[position+2] << 8 | data[position+1]);
+                ctx->_rrInterval.append(data[position+1] << 8 | data[position]);
                 position += 2;
             }
         }
-        if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(BleUuid(BLE_SIG_HEART_RATE_MEASUREMENT_CHAR), ctx->_notifyContext);
+        if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
     }
     HeartRateMeasurementFlags _flags;
     uint16_t _hr, _joules;
@@ -56,15 +55,15 @@ public:
         _characteristic.onDataReceived(onDataReceived, this);
     };
 
-    uint16_t getHeartRate() {return _hr;}
-    uint16_t getEnergyExpended() {return _joules;}
+    uint16_t getHeartRate() const {return _hr;}
+    uint16_t getEnergyExpended() const {return _joules;}
     int enableNotification() {return _characteristic.subscribe(true);}
     void notifyCallback(void (*callback)(BleUuid, void*), void* context) {
         _notifyNewData = callback;
         _notifyContext = context;
         }
 
-    HeartRateMeasurement(BleCharacteristic ch): _flags(HeartRateMeasurementFlags::NONE),  _hr(0), _joules(0), _notifyNewData(nullptr) {_characteristic = ch;}
+    HeartRateMeasurement(BleCharacteristic& ch): _flags(HeartRateMeasurementFlags::NONE),  _hr(0), _joules(0), _notifyNewData(nullptr) {_characteristic = ch;}
     ~HeartRateMeasurement() {};
 };
 
@@ -87,7 +86,7 @@ public:
         uint8_t buf;
         return (_characteristic.getValue(&buf, 1) == 1) ? (SensorLocation)buf : SensorLocation::ERROR; 
     }
-    BodySensorLocation(BleCharacteristic ch) {_characteristic = ch;}
+    BodySensorLocation(BleCharacteristic& ch) {_characteristic = ch;}
     ~BodySensorLocation() {}
 };
 
@@ -101,6 +100,6 @@ public:
         return _characteristic.setValue(&buf, 1);
     }
 
-    HeartRateControlPoint(BleCharacteristic ch) {_characteristic = ch;}
+    HeartRateControlPoint(BleCharacteristic& ch) {_characteristic = ch;}
     ~HeartRateControlPoint() {}
 };

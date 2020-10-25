@@ -24,10 +24,5 @@ public:
      */
     void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
 
-    /**
-     *  Enable the heart rate sensor to start notifying data
-     */
-    int enableNotification() {return (_hrMeasurement) ?_hrMeasurement->enableNotification() : -1;}
-
-    HeartRateService(BleService serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
+    HeartRateService(BleService& serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
 };

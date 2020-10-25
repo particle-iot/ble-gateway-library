@@ -7,6 +7,10 @@ void HeartRateMonitor::onConnect()
         if (serv.UUID().type() == BleUuidType::SHORT) {
             switch (serv.UUID().shorted())
             {
+            case BLE_SIG_UUID_GENERIC_ACCESS_SVC:
+                _gapService = std::make_unique<GapGenericService>(serv, peer);
+                _gapService->onConnect();
+                break;
             case BLE_SIG_UUID_HEART_RATE_SVC:
                 hrService = std::make_unique<HeartRateService>(serv, peer);
                 hrService->onConnect();

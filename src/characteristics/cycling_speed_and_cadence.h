@@ -48,7 +48,7 @@ public:
         _notifyContext = context;
         }
     
-    CyclingSpeedAndCadenceChar(BleCharacteristic ch): _characteristic(ch), _notifyNewData(nullptr) {};
+    CyclingSpeedAndCadenceChar(BleCharacteristic& ch): _characteristic(ch), _notifyNewData(nullptr) {};
     ~CyclingSpeedAndCadenceChar() {};
 };
 
@@ -68,7 +68,7 @@ public:
     bool isCrankRevolutionSupported() {return _flags & CSCFeatureFlags::CRANK_REVOLUTION_SUPPORTED;}
     bool isMultipleSensorLocationSupported() {return _flags & CSCFeatureFlags::MULTIPLE_SENSOR_LOCATION_SUPPORTED;}
 
-    CSCFeatureChar(BleCharacteristic ch): _characteristic(ch) {};
+    CSCFeatureChar(BleCharacteristic& ch): _characteristic(ch) {};
     ~CSCFeatureChar() {};
 };
 
@@ -101,7 +101,7 @@ public:
         uint8_t buf;
         return (_characteristic.getValue(&buf, 1) == 1) ? (Location)buf : Location::ERROR; 
     }
-    SensorLocation(BleCharacteristic ch) {_characteristic = ch;}
+    SensorLocation(BleCharacteristic& ch) {_characteristic = ch;}
     ~SensorLocation() {}
 };
 
@@ -118,6 +118,6 @@ public:
     };
     Response setCumulativeValue(uint32_t value) {return (Response)_characteristic.setValue((uint8_t *)&value, 4);}
 
-    SCControlPoint(BleCharacteristic ch) {_characteristic = ch;}
+    SCControlPoint(BleCharacteristic& ch) {_characteristic = ch;}
     ~SCControlPoint() {}
 };

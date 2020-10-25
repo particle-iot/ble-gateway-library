@@ -48,8 +48,22 @@ public:
 
   Vector<std::shared_ptr<BleDevice>>& connectedDevices() {return _connectedDevices;}
 
+  /**
+   * If there are scanned devices in the waitlist to be connected, this will disconnect from
+   * the device. It will be appended to the waitlist at the next scan in last place.
+   * 
+   * If there are no devices in the waitlist, then nothing will happen.
+   * 
+   * @param device The device to be disconnected from
+   * @return true if disconnected, false if not disconnected
+   */
   bool rotateDevice(BleDevice& device);
-
+  /**
+   * Register a callback to be called when any peripheral is connected to.
+   * 
+   * The callback will receive the device as a parameter. Use device.getType() to determine what
+   * kind of device it is (getType() returns the primary service UUID).
+   */
   int onConnectCallback(BleDeviceGatewayConnection callback) {_connectCallback = callback; return 0;};
   void addToAllowList(BleAddress address) {_allowlist.append(address);};
 };
