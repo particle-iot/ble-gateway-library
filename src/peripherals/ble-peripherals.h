@@ -20,19 +20,19 @@ public:
     {
         if (uuid == JUMPER_PULSEOX_SERVICE)
         {
-            return std::make_shared<PulseOx>(scanResult->address);
+            return std::make_shared<PulseOx>(scanResult->address());
         }
         else if (uuid == BLE_SIG_UUID_HEART_RATE_SVC)
         {
-            return std::make_shared<HeartRateMonitor>(scanResult->address);
+            return std::make_shared<HeartRateMonitor>(scanResult->address());
         }
         else if (uuid == BLE_SIG_UUID_BLOOD_PRESSURE_SVC)
         {
-            return std::make_shared<BloodPressureMonitor>(scanResult->address);
+            return std::make_shared<BloodPressureMonitor>(scanResult->address());
         }
         else if (uuid == BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC)
         {
-            return std::make_shared<CyclingSpeedAndCadence>(scanResult->address);
+            return std::make_shared<CyclingSpeedAndCadence>(scanResult->address());
         }
         else
         {

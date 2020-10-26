@@ -100,7 +100,7 @@ bool BleDeviceGateway::isAddressConnectable(BleAddress address)
 void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUuid *uuid)
 {
     BleUuid foundServices[14];
-    size_t len = scanResult->advertisingData.serviceUUID(&foundServices[0], 14);
+    size_t len = scanResult->advertisingData().serviceUUID(&foundServices[0], 14);
     for (size_t serviceIdx = 0; serviceIdx < len; serviceIdx++) {
         if (foundServices[serviceIdx].type() == BleUuidType::SHORT) {
             for (int i = 0; i < _enabledStdServices.size(); i++) {
@@ -117,18 +117,18 @@ void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUu
 void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void *context)
 {
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
-    if (ctx->isAddressConnectable(scanResult->address))
+    if (ctx->isAddressConnectable(scanResult->address()))
     {
         BleUuid uuid;
         ctx->connectableService(scanResult, &uuid);
-        if (uuid.isValid())
+        if (uuid.valid())
         {
             if (ctx->_waitlist.size() < MAX_WAITLIST)
             {
                 int i;
                 for (i = 0; i < ctx->_waitlist.size(); i++)
                 {
-                    if (ctx->_waitlist.at(i)->address == scanResult->address)
+                    if (ctx->_waitlist.at(i)->address == scanResult->address())
                         break;
                 }
                 if (i == ctx->_waitlist.size())
