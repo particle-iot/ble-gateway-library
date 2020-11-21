@@ -6,9 +6,9 @@
  * Add include files for new types here 
  */
 #include "peripherals/pulse-oximeter.h"
-#include "peripherals/blood-pressure-monitor.h"
 #include "peripherals/heart-rate-monitor.h"
 #include "peripherals/cycling-sensor.h"
+//#include "peripherals/blood-pressure-monitor.h"  // This needs Pairing to work
 
 
 class BleTypes {
@@ -26,10 +26,12 @@ public:
         {
             return std::make_shared<HeartRateMonitor>(scanResult->address());
         }
+/*  Remove until Pairing is supported
         else if (uuid == BLE_SIG_UUID_BLOOD_PRESSURE_SVC)
         {
-            return std::make_shared<BloodPressureMonitor>(scanResult->address());
+            return std::make_shared<BloodPressureMonitor>();
         }
+*/
         else if (uuid == BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC)
         {
             return std::make_shared<CyclingSpeedAndCadence>(scanResult->address());

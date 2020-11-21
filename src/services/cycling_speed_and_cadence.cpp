@@ -10,7 +10,6 @@ void CyclingSpeedAndCadenceService::onConnect()
                 case BLE_SIG_CSC_MEASUREMENT_CHAR:
                     _cscMeasurement = std::make_unique<CyclingSpeedAndCadenceChar>(ch);
                     _cscMeasurement->onConnect();
-                    enableNotification();
                     break;
                 case BLE_SIG_CSC_FEATURE_CHAR:
                     _cscFeature = std::make_unique<CSCFeatureChar>(ch);

@@ -101,6 +101,6 @@ public:
      */
     int forceBatteryUpdate() {return (battService) ? battService->forceBatteryUpdate() : -1;}
     
-    CyclingSpeedAndCadence(BleAddress addr): BleDevice{addr}, _callback(nullptr), _wheelmm(0), _speed(0), timed_event(0) {};
+    CyclingSpeedAndCadence(BleAddress addr): BleDevice{addr}, _callback(nullptr), _wheelmm(0), _speed(0), timed_event(0), wheel_rev(0) {};
     ~CyclingSpeedAndCadence() {};
 };

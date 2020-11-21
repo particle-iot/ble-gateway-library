@@ -23,7 +23,7 @@ public:
      * @return The length of the value
      * @return Negative if there's an error
      */
-    int getDeviceName(uint8_t* buf, size_t len) {return (_gapService) ? _gapService->getDeviceName(buf, len) : -1;}
+    int getDeviceName(uint8_t* buf, size_t len) const {return (_gapService) ? _gapService->getDeviceName(buf, len) : -1;}
     /**
      * Set Device Name from the GAP Generic Service
      * 
@@ -34,7 +34,7 @@ public:
      * @return The length of the value
      * @return Negative if there's an error
      */
-    int setDeviceName(const char* str) {return (_gapService) ? _gapService->setDeviceName(str) : -1;}
+    int setDeviceName(const char* str) const {return (_gapService) ? _gapService->setDeviceName(str) : -1;}
     /**
      * Get Appearance from the GAP Generic Service
      * 
@@ -42,7 +42,7 @@ public:
      * 
      * @return The appearance value
      */
-    Appearance::Value getAppearance() {return (_gapService) ? _gapService->getAppearance() : Appearance::Value::NONE;}
+    Appearance::Value getAppearance() const {return (_gapService) ? _gapService->getAppearance() : Appearance::Value::NONE;}
     /**
      * Set Appearance from the GAP Generic Service
      * 
@@ -52,7 +52,7 @@ public:
      * 
      * @return Negative if there's an error
      */
-    int setAppearance(Appearance::Value appearance) {return (_gapService) ? _gapService->setAppearance(appearance) : -1;}
+    int setAppearance(Appearance::Value appearance) const {return (_gapService) ? _gapService->setAppearance(appearance) : -1;}
 
     virtual BleUuid getType() = 0;
     virtual void loop() {};

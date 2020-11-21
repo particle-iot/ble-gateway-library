@@ -19,7 +19,6 @@ public:
     void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
     SensorLocation::Location getSensorLocation() {return (_sensorLocation) ? _sensorLocation->read() : SensorLocation::Location::ERROR;}
     //int resetEnergyExpended() {return (_controlPoint) ? _controlPoint->resetEnergyExpended() : -1;}
-    int enableNotification() {return (_cscMeasurement) ?_cscMeasurement->enableNotification() : -1;}
 
     CyclingSpeedAndCadenceService(BleService& serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
     ~CyclingSpeedAndCadenceService() {}

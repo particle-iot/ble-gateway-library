@@ -36,13 +36,13 @@ private:
 public:
     void onConnect() {
         _characteristic.onDataReceived(onDataReceived, this);
+        _characteristic.subscribe(true);
     };
 
-    uint32_t getWheelRotations() {return _wheel;}
-    uint32_t getCadence() {return _cadence;}
-    uint16_t getLastWheelEvent() {return _last_wheel_event;}
-    uint16_t getLastCadenceEvent() {return _last_cadence_event;}
-    int enableNotification() {return _characteristic.subscribe(true);}
+    uint32_t getWheelRotations() const {return _wheel;}
+    uint32_t getCadence() const {return _cadence;}
+    uint16_t getLastWheelEvent() const {return _last_wheel_event;}
+    uint16_t getLastCadenceEvent() const {return _last_cadence_event;}
     void notifyCallback(void (*callback)(BleUuid, void*), void* context) {
         _notifyNewData = callback;
         _notifyContext = context;

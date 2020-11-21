@@ -23,8 +23,8 @@ private:
   BleDeviceGatewayConnection _connectCallback;
   // Singleton instance
   static BleDeviceGateway* _instance;
-  bool isAddressConnectable(BleAddress address);
-  void connectableService(const BleScanResult *scanResult, BleUuid *uuid);
+  bool isAddressConnectable(const BleAddress& address) const;
+  void connectableService(const BleScanResult *scanResult, BleUuid *uuid) const;
   BleDeviceGateway(): _connectCallback(nullptr) {};
 
 public:
@@ -57,7 +57,7 @@ public:
    * @param device The device to be disconnected from
    * @return true if disconnected, false if not disconnected
    */
-  bool rotateDevice(BleDevice& device);
+  bool rotateDevice(BleDevice& device) const;
   /**
    * Register a callback to be called when any peripheral is connected to.
    * 

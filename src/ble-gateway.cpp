@@ -36,16 +36,18 @@ void BleDeviceGateway::loop()
             if (_waitlist.first()->peer.connected())
             {
                 Log.info("Successfully connected");
+                delay(50);
                 std::shared_ptr<BleDevice> ptr = _waitlist.takeFirst();
                 ptr->onConnect();
-                if(ptr->peer.connected() && _connectCallback != nullptr) {
-                    _connectCallback(*ptr);
+                if(ptr->peer.connected()) {
                     _connectedDevices.append(ptr);
+                    if (_connectCallback != nullptr) _connectCallback(*ptr);
                 }
             }
             else
             {
                 Log.info("Could not connect");
+                _waitlist.takeFirst();
             }
         }
     }
@@ -73,13 +75,13 @@ bool BleDeviceGateway::enableService(uint16_t sigService)
     }
 }
 
-bool BleDeviceGateway::rotateDevice(BleDevice& device)
+bool BleDeviceGateway::rotateDevice(BleDevice& device) const
 {
     if (_waitlist.isEmpty()) return false;
     return (device.peer.disconnect() == SYSTEM_ERROR_NONE) ? true : false;
 }
 
-bool BleDeviceGateway::isAddressConnectable(BleAddress address)
+bool BleDeviceGateway::isAddressConnectable(const BleAddress& address) const
 {
     if (_allowlist.isEmpty() && _denylist.isEmpty()) return true;
     if (!_allowlist.isEmpty()) {
@@ -97,7 +99,7 @@ bool BleDeviceGateway::isAddressConnectable(BleAddress address)
     return false;
 }
 
-void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUuid *uuid)
+void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUuid *uuid) const
 {
     BleUuid foundServices[14];
     size_t len = scanResult->advertisingData().serviceUUID(&foundServices[0], 14);
@@ -121,7 +123,7 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
     {
         BleUuid uuid;
         ctx->connectableService(scanResult, &uuid);
-        if (uuid.valid())
+        if (uuid.isValid())
         {
             if (ctx->_waitlist.size() < MAX_WAITLIST)
             {
@@ -157,4 +159,5 @@ void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
             break;
         }
     }
+    Log.info("Devices connected: %d", ctx->_connectedDevices.size());
 }

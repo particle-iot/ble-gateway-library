@@ -39,10 +39,11 @@ void CyclingSpeedAndCadence::_onNewValue(BleUuid uuid, void* context) {
             ctx->wheel_rev = ctx->getWheelRotations();
             ctx->timed_event = ctx->getLastWheelEvent();
         } else {
-            if (ctx->getLastWheelEvent() - ctx->timed_event > 0) {
+            if (ctx->getLastWheelEvent() != ctx->timed_event) {
                 float meters = (ctx->_wheelmm)/1000.0 * (ctx->getWheelRotations()-ctx->wheel_rev);
-                float hours = ((ctx->getLastWheelEvent()-ctx->timed_event)/1024.0)/3600;
-                ctx->_speed = (uint16_t)( meters/hours );
+                // The event timer rolls over every 64 seconds, check to see if it has rolled over.
+                float seconds = (ctx->getLastWheelEvent() - ctx->timed_event > 0) ? ((ctx->getLastWheelEvent()-ctx->timed_event)/1024.0) : ( (ctx->getLastWheelEvent()+0xFFFF-ctx->timed_event)/1024.0 );
+                ctx->_speed = (uint16_t)( meters/(seconds/3600.0) );
                 ctx->wheel_rev = ctx->getWheelRotations();
                 ctx->timed_event = ctx->getLastWheelEvent();
             } else {

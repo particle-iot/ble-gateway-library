@@ -17,11 +17,11 @@ void BatteryService::onConnect() {
 }
 
 int BatteryService::getBatteryLevel() {
-    return (_batteryLevel.valid()) ? _level : -1;
+    return (_batteryLevel.isValid()) ? _level : -1;
 }
 
 int BatteryService::forceBatteryUpdate() {
-    if (_batteryLevel.valid()) {
+    if (_batteryLevel.isValid()) {
         _batteryLevel.getValue(&_level, 1);
         return _level;
     } else {

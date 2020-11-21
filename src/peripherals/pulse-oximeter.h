@@ -47,10 +47,7 @@ public:
 
     int setAlert(PulseOxAlertType type, PulseOxAlertCallback callback, uint16_t period, uint8_t low = 0, uint8_t high = 0);
 
-    PulseOx(BleAddress addr):   BleDevice{addr},
-                                _elapsed(System.uptime()),
-                                _hr(0),
-                                _spo(0) {};
+    PulseOx(BleAddress addr): BleDevice{addr}, _elapsed(System.uptime()), _hr(0), _spo(0) {};
     PulseOx(BleDevice& dev) {PulseOx(dev.address);};
 
     ~PulseOx() {};
