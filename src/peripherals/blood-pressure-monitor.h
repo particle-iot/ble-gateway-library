@@ -25,7 +25,6 @@ private:
     static void _onNewValue(BleUuid, void*);
 public:
     void onConnect();
-    void loop() {};
     BleUuid getType() final {return BleUuid(BLE_SIG_UUID_BLOOD_PRESSURE_SVC);}
     /**
      *  Access data as last reported by the device 

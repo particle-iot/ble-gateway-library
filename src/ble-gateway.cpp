@@ -38,10 +38,19 @@ void BleDeviceGateway::loop()
                 Log.info("Successfully connected");
                 delay(50);
                 std::shared_ptr<BleDevice> ptr = _waitlist.takeFirst();
+                _connectedDevices.append(ptr);
                 ptr->onConnect();
                 if(ptr->peer.connected()) {
-                    _connectedDevices.append(ptr);
                     if (_connectCallback != nullptr) _connectCallback(*ptr);
+                } else {
+                    for (int i = 0; i < _connectedDevices.size(); i++)
+                    {
+                        if (_connectedDevices.at(i)->peer.address() == ptr->address)
+                        {
+                            _connectedDevices.removeAt(i);
+                            break;
+                        }
+                    }
                 }
             }
             else

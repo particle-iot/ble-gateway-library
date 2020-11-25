@@ -8,7 +8,7 @@
 #include "peripherals/pulse-oximeter.h"
 #include "peripherals/heart-rate-monitor.h"
 #include "peripherals/cycling-sensor.h"
-//#include "peripherals/blood-pressure-monitor.h"  // This needs Pairing to work
+//#include "peripherals/blood-pressure-monitor.h"  // This needs LESC to work
 
 
 class BleTypes {
@@ -26,12 +26,11 @@ public:
         {
             return std::make_shared<HeartRateMonitor>(scanResult->address());
         }
-/*  Remove until Pairing is supported
+/*  Remove until LESC is supported
         else if (uuid == BLE_SIG_UUID_BLOOD_PRESSURE_SVC)
         {
-            return std::make_shared<BloodPressureMonitor>();
-        }
-*/
+            return std::make_shared<BloodPressureMonitor>(scanResult->address());
+        } */
         else if (uuid == BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC)
         {
             return std::make_shared<CyclingSpeedAndCadence>(scanResult->address());
