@@ -56,7 +56,11 @@ public:
 
     virtual BleUuid getType() = 0;
     virtual void loop() {};
-    virtual void onConnect() = 0;
+    virtual void onConnect() {};
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+    virtual void onPair() {Log.info("Pairing succeeded");};
+    virtual int passkeyInput(uint8_t* passkey) {return -1;};
+#endif
 
     BleDevice(BleAddress addr): _gapService(nullptr), address(addr) {};
     
