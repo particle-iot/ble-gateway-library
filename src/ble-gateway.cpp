@@ -9,13 +9,24 @@
 
 void onDisconnected(const BlePeerDevice &peer, void *context);
 void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+void onPairing(const BlePairingEvent &event, void *context);
+#endif
 
 BleDeviceGateway *BleDeviceGateway::_instance = nullptr;
 
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+void BleDeviceGateway::setup(BlePairingIoCaps capabilities)
+#else
 void BleDeviceGateway::setup()
+#endif
 {
     _scan_period = 10;
     BLE.onDisconnected(onDisconnected, this);
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+    BLE.setPairingIoCaps(capabilities);
+    BLE.onPairingEvent(onPairing, this);
+#endif
 }
 
 void BleDeviceGateway::loop()
@@ -75,6 +86,17 @@ bool BleDeviceGateway::enableService(const char *customService)
     }
 }
 
+bool BleDeviceGateway::enableService(const char *completeLocalName, const char *customService)
+{
+    if (_enabledLocalNames.contains(completeLocalName)) {
+        return false;
+    } else {
+        _localNamesUuid.append(customService);
+        return _enabledLocalNames.append(completeLocalName);
+    }
+}
+
+
 bool BleDeviceGateway::enableService(uint16_t sigService) 
 {
     if (_enabledStdServices.contains(sigService)) {
@@ -110,6 +132,12 @@ bool BleDeviceGateway::isAddressConnectable(const BleAddress& address) const
 
 void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUuid *uuid) const
 {
+    for (int nameIdx = 0; nameIdx < _enabledLocalNames.size(); nameIdx++) {
+        if (scanResult->advertisingData().deviceName() == _enabledLocalNames.at(nameIdx) || scanResult->scanResponse().deviceName() == _enabledLocalNames.at(nameIdx)) {
+            *uuid = BleUuid(_localNamesUuid.at(nameIdx));
+            return;
+        }
+    }
     BleUuid foundServices[14];
     size_t len = scanResult->advertisingData().serviceUUID(&foundServices[0], 14);
     for (size_t serviceIdx = 0; serviceIdx < len; serviceIdx++) {
@@ -170,3 +198,60 @@ void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
     }
     Log.info("Devices connected: %d", ctx->_connectedDevices.size());
 }
+
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
+{
+    BleDeviceGateway* ctx = (BleDeviceGateway *)context;
+    for (int i = 0; i < ctx->_connectedDevices.size(); i++)
+    {
+        if (ctx->_connectedDevices.at(i)->peer.address() == event.peer.address())
+        {
+            switch (event.type)
+            {
+            case BlePairingEventType::PASSKEY_DISPLAY:
+                if (ctx->_passkeyDisplayCallback == nullptr)
+                {
+                    char buf[event.payloadLen+1];
+                    memcpy(buf, event.payload.passkey, event.payloadLen);
+                    buf[event.payloadLen+1] = '\0';
+                    Log.info("Default passkey display: %s", buf);
+                } else {
+                    ctx->_passkeyDisplayCallback(event.payload.passkey, event.payloadLen);
+                }
+                break;
+            case BlePairingEventType::PASSKEY_INPUT:
+            {
+                uint8_t* passkey = nullptr;
+                if (ctx->_passkeyInputCallback == nullptr) {
+                    if (ctx->_connectedDevices.at(i)->passkeyInput(passkey) >= 0) {
+                        BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
+                    } else {
+                        Log.info("Reject pairing due to error in passkey callback");
+                        BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
+                    }
+                } else {
+                    if (ctx->_passkeyInputCallback(passkey) >= 0) {
+                        BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
+                    } else {
+                        Log.info("Reject pairing due to error in passkey callback");
+                        BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
+                    }
+                }
+            }
+                break;
+            case BlePairingEventType::STATUS_UPDATED:
+                if (event.payload.status == BLE_GAP_SEC_STATUS_SUCCESS) {
+                    ctx->_connectedDevices.at(i)->onPair();
+                } else {
+                    Log.info("Pairing failed with code: %d", event.payload.status);
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+    }
+}
+#endif

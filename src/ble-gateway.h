@@ -9,6 +9,10 @@
 class BleDeviceGateway;
 
 typedef void (*BleDeviceGatewayConnection)(BleDevice& device);
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+typedef void (*BlePasskeyDisplay)(const uint8_t* passkey, size_t passkeyLen);
+typedef int (*BlePasskeyInput)(uint8_t* passkey);
+#endif
 
 class BleDeviceGateway
 {
@@ -16,16 +20,26 @@ private:
   Vector<BleAddress> _allowlist, _denylist;
   Vector<std::shared_ptr<BleDevice>> _waitlist, _connectedDevices;
   Vector<uint16_t> _enabledStdServices;
-  Vector<const char*> _enabledCustomServices;
+  Vector<const char*> _enabledCustomServices, _enabledLocalNames, _localNamesUuid;
   uint16_t _scan_period;
   static void scanResultCallback(const BleScanResult *scanResult, void *context);
   static void onDisconnected(const BlePeerDevice &peer, void *context);
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+  static void onPairing(const BlePairingEvent &event, void *context);
+  BlePasskeyDisplay _passkeyDisplayCallback;
+  BlePasskeyInput _passkeyInputCallback;
+#endif
   BleDeviceGatewayConnection _connectCallback;
   // Singleton instance
   static BleDeviceGateway* _instance;
   bool isAddressConnectable(const BleAddress& address) const;
   void connectableService(const BleScanResult *scanResult, BleUuid *uuid) const;
-  BleDeviceGateway(): _connectCallback(nullptr) {};
+  BleDeviceGateway():  
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+      _passkeyDisplayCallback(nullptr),
+      _passkeyInputCallback(nullptr),
+#endif
+      _connectCallback(nullptr) {};
 
 public:
   /**
@@ -39,11 +53,17 @@ public:
     }
     return *_instance;
   }
-
+#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+  void setup(BlePairingIoCaps capabilities = BlePairingIoCaps::NONE);
+  void onPasskeyDisplay(BlePasskeyDisplay callback) {_passkeyDisplayCallback = callback;};
+  void onPasskeyInput(BlePasskeyInput callback) {_passkeyInputCallback = callback;};
+#else
   void setup();
+#endif
   void loop();
 
   bool enableService(const char *customService);
+  bool enableService(const char *completeLocalName, const char *customService);
   bool enableService(uint16_t sigService);
 
   Vector<std::shared_ptr<BleDevice>>& connectedDevices() {return _connectedDevices;}
