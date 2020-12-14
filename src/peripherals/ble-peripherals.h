@@ -8,6 +8,7 @@
 #include "peripherals/pulse-oximeter.h"
 #include "peripherals/heart-rate-monitor.h"
 #include "peripherals/cycling-sensor.h"
+#include "peripherals/veepeak-obdcheck.h"
 //#include "peripherals/blood-pressure-monitor.h"  // This needs LESC to work
 
 
@@ -34,6 +35,10 @@ public:
         else if (uuid == BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC)
         {
             return std::make_shared<CyclingSpeedAndCadence>(scanResult->address());
+        }
+        else if (uuid == VEEPEAK_SERVICE)
+        {
+            return std::make_shared<VeepeakObd>(scanResult->address());
         }
         else
         {
