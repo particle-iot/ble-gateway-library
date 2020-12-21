@@ -58,7 +58,20 @@ public:
     virtual void loop() {};
     virtual void onConnect() {};
 #if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
+    /**
+     * Called when pairing is complete.
+     */
     virtual void onPair() {Log.info("Pairing succeeded");};
+    /**
+     * This will be called when passkey input is required by the peripheral, and the Application
+     * hasn't set a callback to enter a passkey.
+     * 
+     * This can be overloaded by a peripheral to hard-code a default passkey value.
+     * 
+     * @param passkey Pointer to fill in with 6-digit passkey
+     * 
+     * @return Negative if there's an error
+     */
     virtual int passkeyInput(uint8_t* passkey) {return -1;};
 #endif
 

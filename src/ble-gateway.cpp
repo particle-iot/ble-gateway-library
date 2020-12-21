@@ -241,10 +241,10 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
             }
                 break;
             case BlePairingEventType::STATUS_UPDATED:
-                if (event.payload.status == BLE_GAP_SEC_STATUS_SUCCESS) {
+                if (event.payload.status.status == BLE_GAP_SEC_STATUS_SUCCESS) {
                     ctx->_connectedDevices.at(i)->onPair();
                 } else {
-                    Log.info("Pairing failed with code: %d", event.payload.status);
+                    Log.info("Pairing failed with code: %d", event.payload.status.status);
                 }
                 break;
             default:
