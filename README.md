@@ -68,6 +68,10 @@ If you're not sure if the Heart Rate monitor supports `NOTIFY`, you can use the 
 
 Another device might instead allow you to read or write to it. In that case, the type for that device would have APIs to allow you to do that within your application.
 
+## Examples
+
+* [Tracker Bike Speed and Heart Rate](examples/tracker-bike_speed-heartrate): use a Bicycle Speed sensor and a Heart Rate monitor to track your speed and heart rate as you bike around town.
+
 ## Library Design
 
 The BLE specification takes a modular approach to building a device. Peripherals are structured like this:
@@ -99,7 +103,7 @@ The top-level is the definition of peripheral types, and can be found in the `sr
 To add a new type of device to connect to, follow these steps:
 
 * Create any needed characteristics in `src/characteristics`
-* Create any needed services in src/services
+* Create any needed services in `src/services`
 * In `src/peripherals/`, derive the BleDevice class
 * In `src/peripherals/ble-peripherals.h`, include the new header file, add new device type pointer creation to the `if...then...else` statements
 * The derived BleDevice class should expose methods to read/set characteristics as appropriate

@@ -9,24 +9,16 @@
 
 void onDisconnected(const BlePeerDevice &peer, void *context);
 void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
-#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
 void onPairing(const BlePairingEvent &event, void *context);
-#endif
 
 BleDeviceGateway *BleDeviceGateway::_instance = nullptr;
 
-#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
 void BleDeviceGateway::setup(BlePairingIoCaps capabilities)
-#else
-void BleDeviceGateway::setup()
-#endif
 {
     _scan_period = 10;
     BLE.onDisconnected(onDisconnected, this);
-#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
     BLE.setPairingIoCaps(capabilities);
     BLE.onPairingEvent(onPairing, this);
-#endif
 }
 
 void BleDeviceGateway::loop()
@@ -199,7 +191,6 @@ void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
     Log.info("Devices connected: %d", ctx->_connectedDevices.size());
 }
 
-#if (SYSTEM_VERSION >= SYSTEM_VERSION_v200RC4)
 void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
 {
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
@@ -254,4 +245,3 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
         }
     }
 }
-#endif
