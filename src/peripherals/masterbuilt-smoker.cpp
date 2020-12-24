@@ -9,11 +9,16 @@ void MasterbuiltSmoker::onDataReceived(const uint8_t *data, size_t len, const Bl
     bool changed = false;
     if (len > 14) {
         if ( ( (data[5] << 8 | data[4]) != ctx->_smoker_temp) || ( (data[7] << 8 | data[6]) != ctx->_probe_temp)  ) changed = true;
+        ctx->_powerOn = true;
         ctx->_smoker_temp = data[5] << 8 | data[4];
         ctx->_probe_temp = data[7] << 8 | data[6];
         ctx->_remaining_minutes = data[9] << 8 | data[8];
         ctx->_set_minutes = data[12] << 8 | data[11];
         ctx->_set_temp = data[14] << 8 | data[13];
+    } else if (len > 3) {
+        changed = ctx->_powerOn;
+        if ( data[0] == 0xb2 && data[1] == 0 && data[2] == 0 && data[3] == 0) ctx->_powerOn = false;
+        changed = changed != ctx->_powerOn;
     }
     if (ctx->_callback != nullptr) ctx->_callback(*ctx, ctx->_dataChar.UUID(), ctx->_callbackContext);
     if (changed && ctx->_changedCallback != nullptr) ctx->_changedCallback(*ctx, ctx->_changedCallbackContext);
@@ -76,8 +81,19 @@ int MasterbuiltSmoker::passkeyInput(uint8_t* passkey)
 
  }
 
- bool MasterbuiltSmoker::setSmokerTemp(uint16_t temp) 
- {
-     //TODO: Write to the smoker with the new temp
-     return false;
- }
+bool MasterbuiltSmoker::setTempAndTime(uint16_t temp, uint16_t minutes)
+{
+    uint8_t buf[7] = {0xA1, 0x07, 0x05, (uint8_t)(minutes & 0xff), (uint8_t)(minutes >> 8), (uint8_t)(temp & 0xff), (uint8_t)(temp >> 8)};
+    Log.info("Sending: %02X %02X %02X %02X %02X %02X %02X", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
+    return (_controlChar.setValue(buf, 7) == 7);
+}
+
+bool MasterbuiltSmoker::setSmokerTemp(uint16_t temp) 
+{
+    return setTempAndTime(temp, _remaining_minutes);
+}
+
+bool MasterbuiltSmoker::setSmokerTime(uint16_t time)
+{
+    return setTempAndTime(_set_temp, time);
+}
