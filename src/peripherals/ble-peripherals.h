@@ -40,6 +40,7 @@ public:
         else if (uuid == MASTERBUILT_SMOKER_SERVICE)
         {
             return std::make_shared<MasterbuiltSmoker>(scanResult->address());
+        }
         else if (uuid == VEEPEAK_SERVICE)
         {
             return std::make_shared<VeepeakObd>(scanResult->address());
