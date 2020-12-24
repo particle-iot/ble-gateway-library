@@ -4,37 +4,18 @@
  */
 
 #include "Particle.h"
-#include "peripherals/ble-peripherals.h"
+//#include "peripherals/ble-peripherals.h"
+#include "peripherals/ble_device.h"
 
 class BleDeviceGateway;
 
 typedef void (*BleDeviceGatewayConnection)(BleDevice& device);
 typedef void (*BlePasskeyDisplay)(const uint8_t* passkey, size_t passkeyLen);
 typedef int (*BlePasskeyInput)(uint8_t* passkey);
+typedef std::shared_ptr<BleDevice> (*BleDeviceGatewayDevicePtrGen)(const BleScanResult*);
 
 class BleDeviceGateway
 {
-private:
-  Vector<BleAddress> _allowlist, _denylist;
-  Vector<std::shared_ptr<BleDevice>> _waitlist, _connectedDevices;
-  Vector<uint16_t> _enabledStdServices;
-  Vector<const char*> _enabledCustomServices, _enabledLocalNames, _localNamesUuid;
-  uint16_t _scan_period;
-  static void scanResultCallback(const BleScanResult *scanResult, void *context);
-  static void onDisconnected(const BlePeerDevice &peer, void *context);
-  static void onPairing(const BlePairingEvent &event, void *context);
-  BlePasskeyDisplay _passkeyDisplayCallback;
-  BlePasskeyInput _passkeyInputCallback;
-  BleDeviceGatewayConnection _connectCallback;
-  // Singleton instance
-  static BleDeviceGateway* _instance;
-  bool isAddressConnectable(const BleAddress& address) const;
-  void connectableService(const BleScanResult *scanResult, BleUuid *uuid) const;
-  BleDeviceGateway():  
-  _passkeyDisplayCallback(nullptr),
-  _passkeyInputCallback(nullptr),
-  _connectCallback(nullptr) {};
-
 public:
   /**
    * @brief Singleton class instance access for BleDeviceGateway.
@@ -52,9 +33,10 @@ public:
   void onPasskeyInput(BlePasskeyInput callback) {_passkeyInputCallback = callback;};
   void loop();
 
-  bool enableService(const char *customService);
-  bool enableService(const char *completeLocalName, const char *customService);
-  bool enableService(uint16_t sigService);
+  void enableServiceByName(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* completeName);
+  void enableServiceCustom(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char *customService);
+  void enableService(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, uint16_t sigService);
+
 
   Vector<std::shared_ptr<BleDevice>>& connectedDevices() {return _connectedDevices;}
 
@@ -76,4 +58,33 @@ public:
    */
   int onConnectCallback(BleDeviceGatewayConnection callback) {_connectCallback = callback; return 0;};
   void addToAllowList(BleAddress address) {_allowlist.append(address);};
+
+private:
+  struct EnabledService {
+    uint16_t stdService;
+    const char *customService;
+    const char *completeLocalName;
+    BleDeviceGatewayDevicePtrGen bleDevicePtrGen;
+    EnabledService(): stdService(0), customService(nullptr), completeLocalName(nullptr) {};
+  };
+  void enableService(EnabledService& service);
+  Vector<BleAddress> _allowlist, _denylist;
+  Vector<std::shared_ptr<BleDevice>> _waitlist, _connectedDevices;
+  Vector<EnabledService> _enabledServices;
+  uint16_t _scan_period;
+  static void scanResultCallback(const BleScanResult *scanResult, void *context);
+  static void onDisconnected(const BlePeerDevice &peer, void *context);
+  static void onPairing(const BlePairingEvent &event, void *context);
+  BlePasskeyDisplay _passkeyDisplayCallback;
+  BlePasskeyInput _passkeyInputCallback;
+  BleDeviceGatewayConnection _connectCallback;
+  // Singleton instance
+  static BleDeviceGateway* _instance;
+  bool isAddressConnectable(const BleAddress& address) const;
+  int connectableService(const BleScanResult *scanResult) const;
+  BleDeviceGateway():  
+  _passkeyDisplayCallback(nullptr),
+  _passkeyInputCallback(nullptr),
+  _connectCallback(nullptr) {};
+
 };

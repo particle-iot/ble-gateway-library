@@ -69,34 +69,35 @@ void BleDeviceGateway::loop()
     }
 }
 
-bool BleDeviceGateway::enableService(const char *customService)
+void BleDeviceGateway::enableService(EnabledService& service)
 {
-    if (_enabledCustomServices.contains(customService)) {
-        return false;
-    } else {
-        return _enabledCustomServices.append(customService);
-    }
+    _enabledServices.append(service);
 }
 
-bool BleDeviceGateway::enableService(const char *completeLocalName, const char *customService)
+void BleDeviceGateway::enableServiceByName(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* completeName)
 {
-    if (_enabledLocalNames.contains(completeLocalName)) {
-        return false;
-    } else {
-        _localNamesUuid.append(customService);
-        return _enabledLocalNames.append(completeLocalName);
-    }
+    EnabledService service;
+    service.completeLocalName = completeName;
+    service.bleDevicePtrGen = bleDevicePtrGen;
+    enableService(service);
+}
+
+void BleDeviceGateway::enableServiceCustom(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* customService)
+{
+    EnabledService service;
+    service.customService = customService;
+    service.bleDevicePtrGen = bleDevicePtrGen;
+    enableService(service);
+}
+void BleDeviceGateway::enableService(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, uint16_t sigService)
+{
+    EnabledService service;
+    service.stdService = sigService;
+    service.bleDevicePtrGen = bleDevicePtrGen;
+    enableService(service);
 }
 
 
-bool BleDeviceGateway::enableService(uint16_t sigService) 
-{
-    if (_enabledStdServices.contains(sigService)) {
-        return false;
-    } else {
-        return _enabledStdServices.append(sigService);
-    }
-}
 
 bool BleDeviceGateway::rotateDevice(BleDevice& device) const
 {
@@ -122,27 +123,23 @@ bool BleDeviceGateway::isAddressConnectable(const BleAddress& address) const
     return false;
 }
 
-void BleDeviceGateway::connectableService(const BleScanResult *scanResult, BleUuid *uuid) const
+int BleDeviceGateway::connectableService(const BleScanResult *scanResult) const
 {
-    for (int nameIdx = 0; nameIdx < _enabledLocalNames.size(); nameIdx++) {
-        if (scanResult->advertisingData().deviceName() == _enabledLocalNames.at(nameIdx) || scanResult->scanResponse().deviceName() == _enabledLocalNames.at(nameIdx)) {
-            *uuid = BleUuid(_localNamesUuid.at(nameIdx));
-            return;
-        }
-    }
-    BleUuid foundServices[14];
-    size_t len = scanResult->advertisingData().serviceUUID(&foundServices[0], 14);
-    for (size_t serviceIdx = 0; serviceIdx < len; serviceIdx++) {
-        if (foundServices[serviceIdx].type() == BleUuidType::SHORT) {
-            for (int i = 0; i < _enabledStdServices.size(); i++) {
-                if (foundServices[serviceIdx] == _enabledStdServices.at(i)) *uuid = BleUuid(_enabledStdServices.at(i));
+    for (int idx = 0; idx < _enabledServices.size(); idx++) {
+        if ( _enabledServices.at(idx).completeLocalName != nullptr ) {
+            if (scanResult->advertisingData().deviceName() == _enabledServices.at(idx).completeLocalName || scanResult->scanResponse().deviceName() == _enabledServices.at(idx).completeLocalName) {
+                return idx;
             }
         } else {
-            for (int i = 0; i < _enabledCustomServices.size(); i++) {
-                if (foundServices[serviceIdx] == _enabledCustomServices.at(i)) *uuid = BleUuid(_enabledCustomServices.at(i));
+            Vector<BleUuid> foundUuids = scanResult->advertisingData().serviceUUID();
+            if ( _enabledServices.at(idx).stdService != 0) {
+                if (foundUuids.contains(_enabledServices.at(idx).stdService)) return idx;
+            } else if (_enabledServices.at(idx).customService != nullptr) {
+                if (foundUuids.contains(_enabledServices.at(idx).customService)) return idx;
             }
         }
     }
+    return -1;
 }
 
 void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void *context)
@@ -150,9 +147,8 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
     if (ctx->isAddressConnectable(scanResult->address()))
     {
-        BleUuid uuid;
-        ctx->connectableService(scanResult, &uuid);
-        if (uuid.isValid())
+        int idx = ctx->connectableService(scanResult);
+        if (idx >= 0)
         {
             if (ctx->_waitlist.size() < MAX_WAITLIST)
             {
@@ -164,7 +160,7 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
                 }
                 if (i == ctx->_waitlist.size())
                 {
-                    std::shared_ptr<BleDevice> newDev = BleTypes::getDevicePointer(uuid, scanResult);
+                    std::shared_ptr<BleDevice> newDev = (ctx->_enabledServices.at(idx).bleDevicePtrGen)(scanResult);
                     if (newDev != nullptr) ctx->_waitlist.append(newDev);
                 }
             }

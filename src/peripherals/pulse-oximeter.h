@@ -41,6 +41,9 @@ public:
     void onConnect();
     void loop();
     BleUuid getType() override {return BleUuid(JUMPER_PULSEOX_SERVICE);}
+    static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
+        return std::make_shared<PulseOx>(scanResult->address());
+    }
 
     uint8_t getSpo() { return _spo;};
     uint8_t getHr()  { return _hr;};

@@ -29,6 +29,9 @@ public:
     void onConnect();
     void loop();
     BleUuid getType() override {return BleUuid(MASTERBUILT_SMOKER_SERVICE);}
+    static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
+        return std::make_shared<MasterbuiltSmoker>(scanResult->address());
+    }
 
     int passkeyInput(uint8_t* passkey);
     /**

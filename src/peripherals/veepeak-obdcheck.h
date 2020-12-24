@@ -19,6 +19,9 @@ private:
 public:
     void onConnect();
     BleUuid getType() override {return BleUuid(VEEPEAK_SERVICE);}
+    static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
+        return std::make_shared<VeepeakObd>(scanResult->address());
+    }
 
     int available() override {return _input_vector.size();};
     size_t write(uint8_t c) override;

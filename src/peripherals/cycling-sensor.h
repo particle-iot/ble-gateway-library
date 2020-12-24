@@ -29,6 +29,9 @@ public:
     void onConnect();
     void loop() {};
     BleUuid getType() {return BleUuid(BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);}
+    static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
+        return std::make_shared<CyclingSpeedAndCadence>(scanResult->address());
+    }
 
     /**
      * Register a callback that will be called when a new value is received. 
