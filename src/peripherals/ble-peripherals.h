@@ -9,6 +9,7 @@
 #include "peripherals/heart-rate-monitor.h"
 #include "peripherals/cycling-sensor.h"
 #include "peripherals/masterbuilt-smoker.h"
+#include "peripherals/veepeak-obdcheck.h"
 //#include "peripherals/blood-pressure-monitor.h"  // This needs LESC to work
 
 
@@ -39,6 +40,10 @@ public:
         else if (uuid == MASTERBUILT_SMOKER_SERVICE)
         {
             return std::make_shared<MasterbuiltSmoker>(scanResult->address());
+        }
+        else if (uuid == VEEPEAK_SERVICE)
+        {
+            return std::make_shared<VeepeakObd>(scanResult->address());
         }
         else
         {
