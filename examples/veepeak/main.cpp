@@ -1,25 +1,10 @@
-/*
- * Copyright (c) 2020 Particle Industries, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #include "Particle.h"
 
 #include "tracker_config.h"
 #include "tracker.h"
 
 #include "ble-gateway.h"
+#include "peripherals/veepeak-obdcheck.h"
 #include "ELMduino.h"
 
 SYSTEM_THREAD(ENABLED);
@@ -47,12 +32,21 @@ void onConnect(BleDevice& device)
   if (device.getType() == BleUuid(VEEPEAK_SERVICE)) {
     VeepeakObd& dev = (VeepeakObd&)device;
     Log.info("Connected to Veepeak OBD BLE");
+
+    // ELMduino library expects an object that derives the Stream
+    // class to send commands to and receive responses from.
     if (!myELM327.begin(dev)) {
         Log.info("Could not connect to ELM327");
     }
   } 
 }
 
+/**
+ * This callback will be called when the Tracker is getting ready to publish a location.
+ * 
+ * Use the writer to add our additional parameters. In this case, we read the engine
+ * RPM, the speed of the vehicle, and the engine temperature from the OBD2 port.
+ */
 void loc_gen_cb(JSONWriter &writer, LocationPoint &point, const void *context)
 {
     for (auto& dev : BleDeviceGateway::instance().connectedDevices())
@@ -81,7 +75,7 @@ void setup()
     Tracker::instance().location.regLocGenCallback(loc_gen_cb);
     BleDeviceGateway::instance().setup();
     BleDeviceGateway::instance().onConnectCallback(onConnect);
-    BleDeviceGateway::instance().enableService("VEEPEAK", VEEPEAK_SERVICE);
+    BleDeviceGateway::instance().enableServiceByName(VeepeakObd::bleDevicePtr ,"VEEPEAK");
 
     Particle.connect();
 }

@@ -1,5 +1,3 @@
-/* ble-devices library by Mariano Goluboff
- */
 
 #include "ble-gateway.h"
 
@@ -174,7 +172,6 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
 void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
 {
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
-    Log.info("BLE Device disconnected: %s", peer.address().toString().c_str());
 
     for (int i = 0; i < ctx->_connectedDevices.size(); i++)
     {
@@ -184,7 +181,6 @@ void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
             break;
         }
     }
-    Log.info("Devices connected: %d", ctx->_connectedDevices.size());
 }
 
 void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
@@ -214,14 +210,12 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
                     if (ctx->_connectedDevices.at(i)->passkeyInput(passkey) >= 0) {
                         BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
                     } else {
-                        Log.info("Reject pairing due to error in passkey callback");
                         BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
                     }
                 } else {
                     if (ctx->_passkeyInputCallback(passkey) >= 0) {
                         BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
                     } else {
-                        Log.info("Reject pairing due to error in passkey callback");
                         BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
                     }
                 }

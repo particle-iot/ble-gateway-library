@@ -22,8 +22,8 @@ private:
     std::unique_ptr<BatteryService> battService;
     NewCyclingCallback _callback;
     void* _callbackContext;
-    uint16_t _wheelmm, _speed, timed_event;
-    uint32_t wheel_rev;
+    uint16_t _wheelmm, timed_event;
+    uint32_t wheel_rev, _speed;
     static void _onNewValue(BleUuid, void*);
 public:
     void onConnect();
@@ -52,7 +52,7 @@ public:
      * 
      * @return speed in meters per hour
      */
-    uint16_t getSpeed() {return _speed;}
+    uint32_t getSpeed() {return _speed;}
 
     /**
      * Returns the last received value of the wheel rotations, cadence, last wheel event and
@@ -104,6 +104,6 @@ public:
      */
     int forceBatteryUpdate() {return (battService) ? battService->forceBatteryUpdate() : -1;}
     
-    CyclingSpeedAndCadence(BleAddress addr): BleDevice{addr}, _callback(nullptr), _wheelmm(0), _speed(0), timed_event(0), wheel_rev(0) {};
+    CyclingSpeedAndCadence(BleAddress addr): BleDevice{addr}, _callback(nullptr), _wheelmm(0), timed_event(0), wheel_rev(0), _speed(0) {};
     ~CyclingSpeedAndCadence() {};
 };

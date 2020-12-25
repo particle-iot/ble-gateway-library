@@ -1,10 +1,7 @@
 #pragma once
 
-/* ble-devices library by Mariano Goluboff
- */
 
 #include "Particle.h"
-//#include "peripherals/ble-peripherals.h"
 #include "peripherals/ble_device.h"
 
 class BleDeviceGateway;

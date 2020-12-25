@@ -47,7 +47,7 @@ void CyclingSpeedAndCadence::_onNewValue(BleUuid uuid, void* context) {
                 ctx->wheel_rev = ctx->getWheelRotations();
                 ctx->timed_event = ctx->getLastWheelEvent();
             } else {
-                ctx->_speed = std::max(0, ctx->_speed - 2000);
+                ctx->_speed = std::max((uint32_t)0, ctx->_speed - 2000);
             }
         }
     }

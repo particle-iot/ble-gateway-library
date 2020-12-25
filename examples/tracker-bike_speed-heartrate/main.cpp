@@ -1,24 +1,10 @@
-/*
- * Copyright (c) 2020 Particle Industries, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #include "Particle.h"
 
 #include "tracker_config.h"
 #include "tracker.h"
 #include "ble-gateway.h"
+#include "peripherals/cycling-sensor.h"
+#include "peripherals/heart-rate-monitor.h"
 
 SYSTEM_THREAD(ENABLED);
 SYSTEM_MODE(SEMI_AUTOMATIC);
@@ -100,8 +86,8 @@ void setup()
     Tracker::instance().configService.registerModule(ble_sensors);
     BleDeviceGateway::instance().setup();
     BleDeviceGateway::instance().onConnectCallback(onConnect);
-    BleDeviceGateway::instance().enableService(BLE_SIG_UUID_HEART_RATE_SVC);
-    BleDeviceGateway::instance().enableService(BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);
+    BleDeviceGateway::instance().enableService(HeartRateMonitor::bleDevicePtr, BLE_SIG_UUID_HEART_RATE_SVC);
+    BleDeviceGateway::instance().enableService(CyclingSpeedAndCadence::bleDevicePtr ,BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);
 
     Particle.connect();
 }
