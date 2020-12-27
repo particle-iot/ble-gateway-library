@@ -64,7 +64,6 @@ private:
     BleDeviceGatewayDevicePtrGen bleDevicePtrGen;
     EnabledService(): stdService(0), customService(nullptr), completeLocalName(nullptr) {};
   };
-  void enableService(EnabledService& service);
   Vector<BleAddress> _allowlist, _denylist;
   Vector<std::shared_ptr<BleDevice>> _waitlist, _connectedDevices;
   Vector<EnabledService> _enabledServices;

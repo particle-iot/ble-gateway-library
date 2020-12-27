@@ -13,18 +13,24 @@ If the peripheral is not currently supported, the library is written in a modula
 
 For basic usage, you will need to:
 
+* Include the header files for the peripherals you want to use
 * Enable the type of devices you want to connect to
 * Register a callback to be notified when a connection happens
 
 ```c++
 #include "ble-device-gateway.h"
+#include "peripherals/pulse-oximeter.h"
+#include "peripherals/cycling-sensor.h"
+#include "peripherals/heart-rate-monitor.h"
+#include "peripherals/masterbuilt-smoker.h"
 
 void setup() {
   BleDeviceGateway::instance().setup();
   BleDeviceGateway::instance().onConnectCallback(onConnect);
-  BleDeviceGateway::instance().enableService(JUMPER_PULSEOX_SERVICE);
-  BleDeviceGateway::instance().enableService(BLE_SIG_UUID_HEART_RATE_SVC);
-  BleDeviceGateway::instance().enableService(BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);
+  BleDeviceGateway::instance().enableServiceCustom(PulseOx::bleDevicePtr, JUMPER_PULSEOX_SERVICE);
+  BleDeviceGateway::instance().enableService(HeartRateMonitor::bleDevicePtr, BLE_SIG_UUID_HEART_RATE_SVC);
+  BleDeviceGateway::instance().enableService(CyclingSpeedAndCadence::bleDevicePtr ,BLE_SIG_UUID_CYCLING_SPEED_CADENCE_SVC);
+  BleDeviceGateway::instance().enableServiceByName(MasterbuiltSmoker::bleDevicePtr ,"Masterbuilt Smoker");
 }
 
 void loop() {
@@ -71,6 +77,7 @@ Another device might instead allow you to read or write to it. In that case, the
 ## Examples
 
 * [Tracker Bike Speed and Heart Rate](examples/tracker-bike_speed-heartrate): use a Bicycle Speed sensor and a Heart Rate monitor to track your speed and heart rate as you bike around town.
+* [Read OBD2 on Tracker with Veepeak OBDCheck BLE+](examples/veepeak): use an OBD2 BLE dongle to read CAN parameters from your car and track speed, RPM, and engine temperature associated with your car's location.
 
 ## Library Design
 
@@ -96,7 +103,7 @@ The definition for services are found in the `src/services` directory. Just like
 
 ### Peripheral types
 
-The top-level is the definition of peripheral types, and can be found in the `src/types` directory. A header file for each device type should be placed here, and these are the only APIs that the application needs to be aware of. The peripheral type implementation should abstract the service and characteristics complexities.
+The top-level is the definition of peripheral types, and can be found in the `src/peripherals` directory. A header file for each device type should be placed here, and these are the only APIs that the application needs to be aware of. The peripheral type implementation should abstract the service and characteristics complexities.
 
 ## Adding new device types
 
@@ -104,14 +111,12 @@ To add a new type of device to connect to, follow these steps:
 
 * Create any needed characteristics in `src/characteristics`
 * Create any needed services in `src/services`
-* In `src/peripherals/`, derive the BleDevice class
-* In `src/peripherals/ble-peripherals.h`, include the new header file, add new device type pointer creation to the `if...then...else` statements
-* The derived BleDevice class should expose methods to read/set characteristics as appropriate
+* In `src/peripherals/<new-peripheral-type>.h`, derive the BleDevice class
+* The derived BleDevice class should expose methods to read/set characteristics as appropriate, and must override the `getType()` function.
 * If a characteristic is `NOTIFY` or `INDICATE`, the class should have a `setNewValueCallback()` function, which accepts a callback to be called when there’s a new value
-* Consider adding a `setAlert()` function, and implement the logic in `loop()`, to minimize application complexity
 
 
 ## LICENSE
 Copyright 2020 Mariano Goluboff
 
-Licensed under the <insert your choice of license here> license
+Licensed under the MIT license

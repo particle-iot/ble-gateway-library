@@ -67,17 +67,12 @@ void BleDeviceGateway::loop()
     }
 }
 
-void BleDeviceGateway::enableService(EnabledService& service)
-{
-    _enabledServices.append(service);
-}
-
 void BleDeviceGateway::enableServiceByName(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* completeName)
 {
     EnabledService service;
     service.completeLocalName = completeName;
     service.bleDevicePtrGen = bleDevicePtrGen;
-    enableService(service);
+    _enabledServices.append(service);
 }
 
 void BleDeviceGateway::enableServiceCustom(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* customService)
@@ -85,14 +80,14 @@ void BleDeviceGateway::enableServiceCustom(BleDeviceGatewayDevicePtrGen bleDevic
     EnabledService service;
     service.customService = customService;
     service.bleDevicePtrGen = bleDevicePtrGen;
-    enableService(service);
+    _enabledServices.append(service);
 }
 void BleDeviceGateway::enableService(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, uint16_t sigService)
 {
     EnabledService service;
     service.stdService = sigService;
     service.bleDevicePtrGen = bleDevicePtrGen;
-    enableService(service);
+    _enabledServices.append(service);
 }
 
 

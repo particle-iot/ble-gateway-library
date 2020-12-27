@@ -22,7 +22,7 @@ public:
     /**
      *  Register callback for when new data is available
      */
-    void setNewValueCallback(void (*callback)(BleUuid, void*), void* context);
+    void setNewValueCallback(void (*callback)(BleUuid, void*), void* context, bool onNewValueOnly = false);
 
     HeartRateService(BleService& serv, BlePeerDevice& peer): _peer(peer), service(serv) {}
 };

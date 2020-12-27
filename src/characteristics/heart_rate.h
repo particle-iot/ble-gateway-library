@@ -19,30 +19,35 @@ private:
     };
     static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context) {
         HeartRateMeasurement* ctx = (HeartRateMeasurement *)context;
+        bool changed = false;
         size_t position = 0;
         if (len > 0) ctx->_flags = (HeartRateMeasurementFlags)data[position++];
         if ( !(ctx->_flags & HeartRateMeasurementFlags::SENSOR_CONTACT_FEATURE_SUPPORTED) ||
                 ( ctx->_flags & HeartRateMeasurementFlags::SENSOR_CONTACT_FEATURE_SUPPORTED && 
                 ctx->_flags & HeartRateMeasurementFlags::SENSOR_CONTACT_DETECTED )){
             if (ctx->_flags & HeartRateMeasurementFlags::HEART_RATE_VALUE_UINT16 && len > (position+1)) {
+                if ( (data[position+1] << 8 | data[position]) != ctx->_hr) changed = true;
                 ctx->_hr = data[position+1] << 8 | (data[position]);
                 position += 2;
             } else if (len > position) {
+                if ( data[position] != ctx->_hr ) changed = true;
                 ctx->_hr = data[position++];
             }
         }
         if (len > position+1 && ctx->_flags & HeartRateMeasurementFlags::ENERGY_EXPENDED_PRESENT) {
+            if ( (data[position+1] << 8 | data[position]) != ctx->_joules) changed = true;
             ctx->_joules = data[position+1] << 8 | (data[position]);
             position += 2;
         }
         if (ctx->_flags & HeartRateMeasurementFlags::RR_INTERVAL_PRESENT) {
+            changed = true;
             ctx->_rrInterval.clear();
             while (len > position + 2) {
                 ctx->_rrInterval.append(data[position+1] << 8 | data[position]);
                 position += 2;
             }
         }
-        if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
+        if (ctx->_notifyNewData != nullptr && (!ctx->_notifyOnNewValueOnly || changed)) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
     }
     HeartRateMeasurementFlags _flags;
     uint16_t _hr, _joules;
@@ -50,6 +55,7 @@ private:
     Vector<uint16_t> _rrInterval;
     void (*_notifyNewData)(BleUuid, void*);
     void* _notifyContext;
+    bool _notifyOnNewValueOnly;
 public:
     void onConnect() {
         _characteristic.onDataReceived(onDataReceived, this);
@@ -58,9 +64,10 @@ public:
     uint16_t getHeartRate() const {return _hr;}
     uint16_t getEnergyExpended() const {return _joules;}
     int enableNotification() {return _characteristic.subscribe(true);}
-    void notifyCallback(void (*callback)(BleUuid, void*), void* context) {
+    void notifyCallback(void (*callback)(BleUuid, void*), void* context, bool onNewValueOnly = false) {
         _notifyNewData = callback;
         _notifyContext = context;
+        _notifyOnNewValueOnly = onNewValueOnly;
         }
 
     HeartRateMeasurement(BleCharacteristic& ch): _flags(HeartRateMeasurementFlags::NONE),  _hr(0), _joules(0), _notifyNewData(nullptr) {_characteristic = ch;}

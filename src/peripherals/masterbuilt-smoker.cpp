@@ -20,8 +20,7 @@ void MasterbuiltSmoker::onDataReceived(const uint8_t *data, size_t len, const Bl
         if ( data[0] == 0xb2 && data[1] == 0 && data[2] == 0 && data[3] == 0) ctx->_powerOn = false;
         changed = changed != ctx->_powerOn;
     }
-    if (ctx->_callback != nullptr) ctx->_callback(*ctx, ctx->_dataChar.UUID(), ctx->_callbackContext);
-    if (changed && ctx->_changedCallback != nullptr) ctx->_changedCallback(*ctx, ctx->_changedCallbackContext);
+    if ( ctx->_callback != nullptr && ( !ctx->_callbackOnChange || changed )) ctx->_callback(*ctx, ctx->_callbackContext);
 }
 
 void MasterbuiltSmoker::onConnect()
@@ -64,16 +63,11 @@ int MasterbuiltSmoker::passkeyInput(uint8_t* passkey)
     return 0;
 }
 
- void MasterbuiltSmoker::setNewValueCallback(NewSmokerValue callback, void* context)
+ void MasterbuiltSmoker::setNewValueCallback(NewSmokerValue callback, void* context, bool onlyOnChange)
  {
      _callback = callback;
      _callbackContext = context;
- }
-
- void MasterbuiltSmoker::setChangedValueCallback(ChangedSmokerValue callback, void* context)
- {
-     _changedCallback = callback;
-     _changedCallbackContext = context;
+     _callbackOnChange = onlyOnChange;
  }
 
  void MasterbuiltSmoker::loop()

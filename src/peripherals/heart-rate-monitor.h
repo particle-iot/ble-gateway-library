@@ -38,7 +38,7 @@ public:
      * @param context An instance pointer, or NULL. Will be passed to the callback when called
      * 
      */
-    void setNewValueCallback(NewHeartRateCallback callback, void* context);
+    void setNewValueCallback(NewHeartRateCallback callback, void* context, bool onNewValueOnly = false);
 
     /**
      * Returns the last received value of the heart rate. This is updated when the heart

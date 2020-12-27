@@ -25,6 +25,6 @@ void HeartRateService::onConnect()
     }
 }
 
-void HeartRateService::setNewValueCallback(void (*callback)(BleUuid, void*), void* context) {
-    if (_hrMeasurement) _hrMeasurement->notifyCallback(callback, context);
+void HeartRateService::setNewValueCallback(void (*callback)(BleUuid, void*), void* context, bool onNewValueOnly) {
+    if (_hrMeasurement) _hrMeasurement->notifyCallback(callback, context, onNewValueOnly);
 }

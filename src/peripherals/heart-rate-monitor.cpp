@@ -39,7 +39,10 @@ void HeartRateMonitor::_onNewValue(BleUuid uuid, void* context) {
     }
 }
 
-void HeartRateMonitor::setNewValueCallback(NewHeartRateCallback callback, void* context) {
+void HeartRateMonitor::setNewValueCallback(NewHeartRateCallback callback, void* context, bool onNewValueOnly) {
     _callback = callback;
     _callbackContext = context;
+    if (hrService != nullptr) hrService->setNewValueCallback(_onNewValue, this, onNewValueOnly);
+    // We don't need to update the battService callback to only on changed value or not, since by definition
+    // this service only sends a new value when there's a change.
 }
