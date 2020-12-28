@@ -63,7 +63,7 @@ protected:
         if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
     }
     BloodPressureMeasurementFlags _flags;
-    BleCharacteristic& _characteristic;
+    BleCharacteristic _characteristic;
     uint16_t _systolic, _diastolic, _map, _ts_year, _pulse, _measurement_status;
     uint8_t _ts_month, _ts_day, _ts_hour, _ts_min, _ts_sec, _userid;
     void (*_notifyNewData)(BleUuid, void*);
@@ -75,10 +75,10 @@ public:
     int getSystolic(float& bp) const {return ieee11073_20601a_sfloat(_systolic, bp);}
     int getDiastolic(float& bp) const {return ieee11073_20601a_sfloat(_diastolic, bp);}
     int getMeanArterial(float& bp) const {return ieee11073_20601a_sfloat(_map, bp);}
-    int enableNotification() {return _characteristic.subscribe(true);}
     void notifyCallback(void (*callback)(BleUuid, void*), void* context) {
         _notifyNewData = callback;
         _notifyContext = context;
+        _characteristic.subscribe(true);
     }
     BloodPressureMeasurement(BleCharacteristic& ch): _flags(BloodPressureMeasurementFlags::NONE), _characteristic(ch) {}
     ~BloodPressureMeasurement() {};

@@ -10,12 +10,10 @@ void BloodPressureService::onConnect()
                 case BLE_SIG_BLOOD_PRESSURE_MEASUREMENT_CHAR:
                     _bpMeasurement = std::make_unique<BloodPressureMeasurement>(ch);
                     _bpMeasurement->onConnect();
-                    _bpMeasurement->enableNotification();
                     break;
                 case BLE_SIG_INTERMEDIATE_CUFF_PRESSURE_CHAR:
                     _intermediateCuff = std::make_unique<IntermediateCuffPressureChar>(ch);
                     _intermediateCuff->onConnect();
-                    _intermediateCuff->enableNotification();
                     break;
                 case BLE_SIG_BLOOD_PRESSURE_FEATURE_CHAR:
                     _bpFeature = std::make_unique<BloodPressureFeatureChar>(ch);
@@ -28,6 +26,6 @@ void BloodPressureService::onConnect()
 }
 
 void BloodPressureService::setNewValueCallback(void (*callback)(BleUuid, void*), void* context) {
-    if (_bpMeasurement) _bpMeasurement->notifyCallback(callback, context);
-    if (_intermediateCuff) _intermediateCuff->notifyCallback(callback, context);
+    if (_bpMeasurement != nullptr) _bpMeasurement->notifyCallback(callback, context);
+    if (_intermediateCuff != nullptr) _intermediateCuff->notifyCallback(callback, context);
 }

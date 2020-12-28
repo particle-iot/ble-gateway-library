@@ -14,7 +14,6 @@ void BloodPressureMonitor::onConnect()
             case BLE_SIG_UUID_BLOOD_PRESSURE_SVC:
                 _bpService = std::make_unique<BloodPressureService>(serv, peer);
                 _bpService->onConnect();
-                _bpService->setNewValueCallback(_onNewValue, this);
                 break;
             case BLE_SIG_UUID_DEVICE_INFORMATION_SVC:
                 _disService = std::make_unique<DeviceInformationService>(serv, peer);
@@ -23,7 +22,6 @@ void BloodPressureMonitor::onConnect()
             case BLE_SIG_UUID_BATTERY_SVC:
                 _battService = std::make_unique<BatteryService>(serv, peer);
                 _battService->onConnect();
-                _battService->setNewValueCallback(_onNewValue, this);
                 break;
             default:
                 break;
@@ -40,4 +38,6 @@ void BloodPressureMonitor::_onNewValue(BleUuid uuid, void* context) {
 void BloodPressureMonitor::setNewValueCallback(NewBloodPressureCallback callback, void* context) {
     _callback = callback;
     _callbackContext = context;
+    if (_bpService != nullptr) _bpService->setNewValueCallback(_onNewValue, this);
+    if (_battService != nullptr) _battService->setNewValueCallback(_onNewValue, this);
 }

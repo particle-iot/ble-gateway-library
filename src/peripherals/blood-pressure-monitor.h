@@ -26,6 +26,9 @@ private:
 public:
     void onConnect();
     BleUuid getType() final {return BleUuid(BLE_SIG_UUID_BLOOD_PRESSURE_SVC);}
+    static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
+        return std::make_shared<BloodPressureMonitor>(scanResult->address());
+    }
     /**
      *  Access data as last reported by the device 
      */
