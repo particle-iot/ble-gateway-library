@@ -7,8 +7,8 @@
 class BleDeviceGateway;
 
 typedef void (*BleDeviceGatewayConnection)(BleDevice& device);
-typedef void (*BlePasskeyDisplay)(const uint8_t* passkey, size_t passkeyLen);
-typedef int (*BlePasskeyInput)(uint8_t* passkey);
+typedef void (*BlePasskeyDisplay)(BleDevice& device, const uint8_t* passkey, size_t passkeyLen);
+typedef void (*BlePasskeyInput)(BleDevice& device);
 typedef std::shared_ptr<BleDevice> (*BleDeviceGatewayDevicePtrGen)(const BleScanResult*);
 
 class BleDeviceGateway
@@ -25,8 +25,33 @@ public:
     }
     return *_instance;
   }
+  /**
+   * In your setup(), initialize the BLE Gateway by calling this. For example:
+   * 
+   * BleDeviceGateway::instance().setup(BlePairingIoCaps::KEYBOARD_DISPLAY);
+   * 
+   * @param capabilities These are the pairing input/output capabilities of your device. They can be:
+   *  NONE - default, no input/ouput
+   *  DISPLAY_ONLY - can display a passkey, but no input
+   *  DISPLAY_YESNO - can display a passkey, and user can enter yes/no
+   *  KEYBOARD_ONLY - user can enter a passkey, but no display
+   *  KEYBOARD_DISPLAY - user can enter a passkey, and device can display a passkey
+   * 
+   */
   void setup(BlePairingIoCaps capabilities = BlePairingIoCaps::NONE);
+  /**
+   * Register a callback that will be called for the Application to display
+   * the passkey being sent by the peripheral. If no callback is registered and the
+   * Gateway receives a passkey, it will be logged via Log.info
+   */
   void onPasskeyDisplay(BlePasskeyDisplay callback) {_passkeyDisplayCallback = callback;};
+  /**
+   * Register a callback that will be called for the Application to be able to enter
+   * a passkey to send to the peripheral. If the peripheral requests a passkey and
+   * the Application does not have this callback registered, then the Gateway will call
+   * the passkeyInput() function in ble_device.h. If the library doesn't have an 
+   * override for that function, pairing will be rejected.
+   */
   void onPasskeyInput(BlePasskeyInput callback) {_passkeyInputCallback = callback;};
   void loop();
 
@@ -79,8 +104,7 @@ private:
   bool isAddressConnectable(const BleAddress& address) const;
   int connectableService(const BleScanResult *scanResult) const;
   BleDeviceGateway():  
-  _passkeyDisplayCallback(nullptr),
-  _passkeyInputCallback(nullptr),
-  _connectCallback(nullptr) {};
-
+    _passkeyDisplayCallback(nullptr),
+    _passkeyInputCallback(nullptr),
+    _connectCallback(nullptr) {};
 };

@@ -24,13 +24,12 @@ private:
     void* _callbackContext;
 public:
     void onConnect();
-    void loop();
     BleUuid getType() override {return BleUuid(MASTERBUILT_SMOKER_SERVICE);}
     static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
         return std::make_shared<MasterbuiltSmoker>(scanResult->address());
     }
 
-    int passkeyInput(uint8_t* passkey);
+    void passkeyInput();
     /**
      * Get the last reported probe temperature
      */
@@ -39,9 +38,12 @@ public:
      * Get the last reported smoker temperature
      */
     uint16_t getSmokerTemp() {return _smoker_temp;};
+    uint16_t getSetTemp() {return _set_temp;};
+    uint16_t getRemainingTime() {return _remaining_minutes;};
+    uint16_t getSetTime() {return _set_minutes;};
     bool setTempAndTime(uint16_t temp, uint16_t minutes);
-    bool setSmokerTemp(uint16_t temp);
-    bool setSmokerTime(uint16_t minutes);
+    bool setSmokerTemp(uint16_t temp) { return setTempAndTime(temp, _remaining_minutes); };
+    bool setSmokerTime(uint16_t minutes) { return setTempAndTime(_set_temp, minutes); };
     bool isPowerOn() { return _powerOn;};
 
     /**

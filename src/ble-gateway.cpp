@@ -36,7 +36,7 @@ void BleDeviceGateway::loop()
             _waitlist.first()->peer = BLE.connect(_waitlist.first()->address, false);
             if (_waitlist.first()->peer.connected())
             {
-                Log.info("Successfully connected");
+                Log.info("Successfully connected %s", _waitlist.first()->peer.address().toString().c_str());
                 delay(50);
                 std::shared_ptr<BleDevice> ptr = _waitlist.takeFirst();
                 _connectedDevices.append(ptr);
@@ -192,27 +192,19 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
                 {
                     char buf[event.payloadLen+1];
                     memcpy(buf, event.payload.passkey, event.payloadLen);
-                    buf[event.payloadLen+1] = '\0';
+                    buf[event.payloadLen] = '\0';
                     Log.info("Default passkey display: %s", buf);
                 } else {
-                    ctx->_passkeyDisplayCallback(event.payload.passkey, event.payloadLen);
+                    ctx->_passkeyDisplayCallback(*ctx->_connectedDevices.at(i), event.payload.passkey, event.payloadLen);
                 }
                 break;
             case BlePairingEventType::PASSKEY_INPUT:
             {
-                uint8_t* passkey = nullptr;
+                Log.info("Passkey input");
                 if (ctx->_passkeyInputCallback == nullptr) {
-                    if (ctx->_connectedDevices.at(i)->passkeyInput(passkey) >= 0) {
-                        BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
-                    } else {
-                        BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
-                    }
+                    ctx->_connectedDevices.at(i)->passkeyInput();
                 } else {
-                    if (ctx->_passkeyInputCallback(passkey) >= 0) {
-                        BLE.setPairingPasskey(ctx->_connectedDevices.at(i)->peer, passkey);
-                    } else {
-                        BLE.rejectPairing(ctx->_connectedDevices.at(i)->peer);
-                    }
+                    ctx->_passkeyInputCallback(*ctx->_connectedDevices.at(i));
                 }
             }
                 break;

@@ -1,5 +1,7 @@
 # BLE Gateway Library
 
+__This library requires DeviceOS version 3.0.0 or higher__
+
 This library turns a Particle Gen3 device (Tracker, Boron, Argon) into a Bluetooth Low Energy (BLE) Central device. In this mode, it is able to detect and connect to BLE Peripherals, and expose APIs so that your application can get and/or send data to the peripherals, depending on their capabilities.
 
 If the peripheral that you’d like to connect to is already supported by the library, you can use this without any modifications. Here's a list of peripherals currently supported:
@@ -73,6 +75,62 @@ void onNewHrValue(HeartRateMonitor& monitor, BleUuid uuid, void* context) {
 If you're not sure if the Heart Rate monitor supports `NOTIFY`, you can use the `bool batterySupportsNotify()` API to find out.
 
 Another device might instead allow you to read or write to it. In that case, the type for that device would have APIs to allow you to do that within your application.
+
+### Handle Pairing
+
+The Gateway Library can help with pairing to a device, whether the pairing is Just Works, or it requires a passkey. Since pairing can involve entering or displaying a passkey, during `setup()` you need to tell the library what the input/output
+capabilities of your device are. For example:
+
+```c++
+void setup() {
+  ...
+  BleDeviceGateway::instance().setup(BlePairingIoCaps::KEYBOARD_DISPLAY);
+}
+```
+
+The options are:
+   *  NONE - default, no input/ouput
+   *  DISPLAY_ONLY - can display a passkey, but no input
+   *  DISPLAY_YESNO - can display a passkey, and user can enter yes/no
+   *  KEYBOARD_ONLY - user can enter a passkey, but no display
+   *  KEYBOARD_DISPLAY - user can enter a passkey, and device can display a passkey
+
+#### Display a Passkey
+
+For displaying a passkey that is sent by the peripheral, you register a callback like this:
+
+```c++
+void onPasskeyDisplay(BleDevice& device, const uint8_t* passkey, size_t passkeyLen);
+
+void setup() {
+  ...
+  BleDeviceGateway::instance().onPasskeyDisplay(onPasskeyDisplay);
+}
+```
+
+The callback will be called when we receive a passkey from the device. The callback can then display it as needed. If there is no callback registered, by default the library will use `Log.info` to log the passkey received.
+
+#### Input a passkey
+
+For entering a passkey value, you can register a callback like this:
+
+```c++
+void onPasskeyInput(BleDevice& device) {
+  if (device.getType() == BleUuid(MASTERBUILT_SMOKER_SERVICE)) {
+    device.passkeyInput((uint8_t *)"000000");
+  } else {
+    device.passkeyInput();
+  }
+}
+
+void setup() {
+  ...
+  BleDeviceGateway::instance().onPasskeyInput(onPasskeyInput);
+}
+```
+
+The callback must call the `passkeyInput` function on the `BleDevice` object. Either call it with a pointer to the passkey (in the example above, 000000), or call it without an argument to use the default passkey
+for that type of peripheral. Note that if the type of peripheral doesn't override `passkeyInput()`, the library will reject the pairing.
 
 ## Examples
 
