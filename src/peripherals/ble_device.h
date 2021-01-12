@@ -57,6 +57,7 @@ public:
     virtual BleUuid getType() = 0;
     virtual void loop() {};
     virtual void onConnect() {};
+    virtual bool pendingData() { return false; };
     /**
      * Called when pairing is complete.
      */

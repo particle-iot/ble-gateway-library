@@ -93,6 +93,7 @@ private:
   Vector<std::shared_ptr<BleDevice>> _waitlist, _connectedDevices;
   Vector<EnabledService> _enabledServices;
   uint16_t _scan_period;
+  uint8_t _connected_count;
   static void scanResultCallback(const BleScanResult *scanResult, void *context);
   static void onDisconnected(const BlePeerDevice &peer, void *context);
   static void onPairing(const BlePairingEvent &event, void *context);
@@ -104,6 +105,7 @@ private:
   bool isAddressConnectable(const BleAddress& address) const;
   int connectableService(const BleScanResult *scanResult) const;
   BleDeviceGateway():  
+    _connected_count(0),
     _passkeyDisplayCallback(nullptr),
     _passkeyInputCallback(nullptr),
     _connectCallback(nullptr) {};

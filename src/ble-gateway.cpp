@@ -29,9 +29,9 @@ void BleDeviceGateway::loop()
         BLE.scan(scanResultCallback, this);
     }
     //if (!BLE.scanning())
-    if (_connectedDevices.size() < BLE_MAX_PERIPHERALS)
+    if (_connected_count < BLE_MAX_PERIPHERALS)
     {
-        while ( (_connectedDevices.size() < BLE_MAX_PERIPHERALS) && !(_waitlist.isEmpty()) )
+        while ( (_connected_count < BLE_MAX_PERIPHERALS) && !(_waitlist.isEmpty()) )
         {
             _waitlist.first()->peer = BLE.connect(_waitlist.first()->address, false);
             if (_waitlist.first()->peer.connected())
@@ -40,18 +40,10 @@ void BleDeviceGateway::loop()
                 delay(50);
                 std::shared_ptr<BleDevice> ptr = _waitlist.takeFirst();
                 _connectedDevices.append(ptr);
+                _connected_count++;
                 ptr->onConnect();
                 if(ptr->peer.connected()) {
                     if (_connectCallback != nullptr) _connectCallback(*ptr);
-                } else {
-                    for (int i = 0; i < _connectedDevices.size(); i++)
-                    {
-                        if (_connectedDevices.at(i)->peer.address() == ptr->address)
-                        {
-                            _connectedDevices.removeAt(i);
-                            break;
-                        }
-                    }
                 }
             }
             else
@@ -63,7 +55,11 @@ void BleDeviceGateway::loop()
     }
     for (int i = 0; i < _connectedDevices.size(); i++)
     {
-        if (_connectedDevices.at(i)->peer.connected()) _connectedDevices.at(i)->loop();
+        _connectedDevices.at(i)->loop();
+        if (!_connectedDevices.at(i)->peer.connected() && !_connectedDevices.at(i)->pendingData()) {
+            Log.trace("Remove device");
+            _connectedDevices.removeAt(i);
+        }
     }
 }
 
@@ -100,6 +96,9 @@ bool BleDeviceGateway::rotateDevice(BleDevice& device) const
 
 bool BleDeviceGateway::isAddressConnectable(const BleAddress& address) const
 {
+    for (int idx = 0; idx < _connectedDevices.size(); idx++) {
+        if (address == _connectedDevices.at(idx)->address) return false;
+    }
     if (_allowlist.isEmpty() && _denylist.isEmpty()) return true;
     if (!_allowlist.isEmpty()) {
         for (auto addr: _allowlist) {
@@ -125,6 +124,7 @@ int BleDeviceGateway::connectableService(const BleScanResult *scanResult) const
             }
         } else {
             Vector<BleUuid> foundUuids = scanResult->advertisingData().serviceUUID();
+            foundUuids.append(scanResult->scanResponse().serviceUUID());
             if ( _enabledServices.at(idx).stdService != 0) {
                 if (foundUuids.contains(_enabledServices.at(idx).stdService)) return idx;
             } else if (_enabledServices.at(idx).customService != nullptr) {
@@ -167,15 +167,8 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
 void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
 {
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
-
-    for (int i = 0; i < ctx->_connectedDevices.size(); i++)
-    {
-        if (ctx->_connectedDevices.at(i)->peer.address() == peer.address())
-        {
-            ctx->_connectedDevices.removeAt(i);
-            break;
-        }
-    }
+    ctx->_connected_count--;
+    Log.trace("Devices connected: %u", ctx->_connected_count);
 }
 
 void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
