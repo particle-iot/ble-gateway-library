@@ -22,6 +22,9 @@ public:
         float concentration;
         bool mol_per_l;
         uint16_t sequence;
+        DateTimeChar::DateTime time;
+        GlucoseMeasurement::Type type;
+        GlucoseMeasurement::Location location;
     };
     
     void onConnect() override;
@@ -32,15 +35,38 @@ public:
         return std::make_shared<GlucoseMonitor>(scanResult->address());
     }
     /**
-     *  Access data as last reported by the device 
+     * Blocking call to request and return the number of stored records. Since it
+     * blocks until it receives the response, there is no callback.
+     * 
+     * @return Number of stored records. Negative if there's an error (like timeout)
      */
     int getNumberStoredRecords(uint16_t timeout_ms = 3000);
+    /**
+     * Blocking call to request and return Glucose measurements from the device.
+     * Since it blocks until receives the response, there is no callback.
+     * 
+     * Note that if there's an error, the return value will be the existing vector
+     * of measurements, which will be empty unless a previous request to get the
+     * measurements was successful and flushBuffer() has not been called.
+     * 
+     * IMPORTANT: make sure to call flushBuffer() after gathering the data,
+     * otherwise it won't reconnect to the same device.
+     */
     Vector<Measurement>& getMeasurements(uint16_t timeout_ms = 3000);
+    Vector<Measurement>& getMeasurements(RecordAccessControlPoint::Operator oper, uint16_t min, uint16_t timeout_ms = 3000);
     void flushBuffer();
+    /**
+     * Returns the glucose measurements that were previously received. No new request
+     * goes out to the device.
+     */
     Vector<Measurement>& getBufferedMeasurements();
+    /**
+     * @return last battery value sent by device
+     */
     int getBatteryLevel();
     /**
-     * Register a callback that will be called when a new value is received. 
+     * Register a callback that will be called when a new value is received. Only the
+     * Battery Service will send callbacks.
      * 
      * @param callback The callback function to be called
      * @param context An instance pointer, or NULL. Will be passed to the callback when called
@@ -59,4 +85,8 @@ private:
     os_semaphore_t _blockSemaphore;
     void* _callbackContext;
     static void _onNewValue(BleUuid, void*);
+    int requestMeasurements(uint16_t timeout_ms = 3000, 
+            RecordAccessControlPoint::Operator oper = RecordAccessControlPoint::Operator::NO_OPERATOR, 
+            RecordAccessControlPoint::FilterType filterType = RecordAccessControlPoint::FilterType::RESERVED_FUTURE_USE,
+            uint8_t* operand = nullptr, uint8_t operand_size = 0);
 };

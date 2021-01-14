@@ -34,11 +34,35 @@ public:
         ANNUNCIATION_PRESENT                    = 0x08,
         CONTEXT_INFO_FOLLOWS                    = 0x10
     };
+    enum Type: uint8_t {
+        TYPE_RESERVED_FUTURE_USE                = 0,
+        CAPILLARY_WHOLE_BLOOD                   = 1,
+        CAPILLARY_PLASMA                        = 2,
+        VENOUS_WHOLE_BLOOD                      = 3,
+        VENOUS_PLASMA                           = 4,
+        ARTERIAL_WHOLE_BLOOD                    = 5,
+        ARTERIAL_PLASMA                         = 6,
+        UNDETERMINED_WHOLE_BLOOD                = 7,
+        UNDETERMINED_PLASMA                     = 8,
+        INTERSTITIAL_FLUID                      = 9,
+        TYPE_CONTROL_SOLUTION                   = 10
+    };
+    enum Location: uint8_t {
+        LOC_RESERVED_FUTURE_USE                 = 0,
+        FINGER                                  = 1,
+        ALTERNATE_SITE_TEST                     = 2,
+        EARLOBE                                 = 3,
+        LOC_CONTROL_SOLUTION                    = 4,
+        LOCATION_NOT_AVAILABLE                  = 15
+    };
     void onConnect();
     void notifyCallback(void (*callback)(BleUuid, void*), void* context);
     uint8_t units() const;
     uint16_t sequence() const;
     int getConcentration(float& gl) const;
+    DateTimeChar::DateTime getTime() const;
+    Type getType() const;
+    Location getLocation() const;
     GlucoseMeasurement(BleCharacteristic& ch): _characteristic(ch), _flags(GlucoseMeasurementFlags::NONE) {}
     ~GlucoseMeasurement() {};
 protected:
@@ -54,48 +78,26 @@ protected:
     void* _notifyContext;
 };
 
+class GlucoseMeasurementContext {
+private:
+    BleCharacteristic& _characteristic;
+public:
+    GlucoseMeasurementContext(BleCharacteristic& ch): _characteristic(ch) {};
+};
+
 class GlucoseFeatureChar {
 private:
-    enum GlucoseFeatureFlags: uint8_t {
-        BODY_MOVEMENT_DETECTION_SUPPORT         = 0x01,
-        CUFF_FIT_DETECTION_SUPPORT              = 0x02,
-        IRREGULAR_PULSE_DETECTION_SUPPORT       = 0x04,
-        PULSE_RATE_RANGE_DETECTION_SUPPORT      = 0x08,
-        MEASUREMENT_POSITION_DETECTION_SUPPORT  = 0x10,
-        MULTIPLE_BOND_SUPPORT                   = 0x20
-    };
     BleCharacteristic& _characteristic;
-    GlucoseFeatureFlags _flags;
 public:
-    void onConnect() {_characteristic.getValue((uint8_t *)&_flags, 1);}
+    //void onConnect() {_characteristic.getValue((uint8_t *)&_flags, 1);}
 
-    bool isBodyMovementDetectionSupported() const {return _flags & GlucoseFeatureFlags::BODY_MOVEMENT_DETECTION_SUPPORT;}
-    bool isCuffFitDetectionSupported() const {return _flags & GlucoseFeatureFlags::CUFF_FIT_DETECTION_SUPPORT;}
-    bool isIrregularPulseDetectionSupported() const {return _flags & GlucoseFeatureFlags::IRREGULAR_PULSE_DETECTION_SUPPORT;}
-    bool isPulseRateRangeDetectionSupported() const {return _flags & GlucoseFeatureFlags::PULSE_RATE_RANGE_DETECTION_SUPPORT;}
-    bool isMeasurementPositionDetectionSupported() const {return _flags & GlucoseFeatureFlags::MEASUREMENT_POSITION_DETECTION_SUPPORT;}
-    bool isMultipleBondSupported() const {return _flags & GlucoseFeatureFlags::MULTIPLE_BOND_SUPPORT;}
-   
     GlucoseFeatureChar(BleCharacteristic& ch): _characteristic(ch) {};
     ~GlucoseFeatureChar() {};
 };
 
 class RecordAccessControlPoint {
 private:
-    static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context) {
-        Log.info("RACP callback");
-        RecordAccessControlPoint* ctx = (RecordAccessControlPoint *)context;
-        ctx->responseCode = (len > 2) ? (OpCode)data[0] : OpCode::RESERVED_FUTURE_USE;
-        if (ctx->responseCode == OpCode::RESPONSE_NUMBER_OF_RECORDS) {
-            ctx->numberOfRecords = data[1] << 8 | data[2];
-        }
-        else if ( ctx->responseCode == OpCode::RESPONSE_CODE ) {
-            ctx->requestCode = (OpCode)data[1];
-            ctx->responseCodeValue = (ResponseCodeValues)data[2];
-        }
-
-        if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
-    }
+    static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
     BleCharacteristic _characteristic;
     void (*_notifyNewData)(BleUuid, void*);
     void* _notifyContext;
@@ -146,33 +148,25 @@ public:
         _notifyContext = context;
         _characteristic.subscribe(true);
     }
-    int sendCommand(OpCode opCode, Operator oper = Operator::NO_OPERATOR, FilterType filterType = FilterType::RESERVED_FUTURE_USE, uint16_t operand = 0) {
-        uint8_t buf[20];
+    int sendCommand(OpCode opCode, Operator oper = Operator::NO_OPERATOR, FilterType filterType = FilterType::RESERVED_FUTURE_USE, uint8_t* operand = nullptr, uint8_t operand_size = 0) {
+        uint8_t buf[3+operand_size];
         buf[0] = (uint8_t)opCode;
-        switch (opCode)
+        buf[1] = (uint8_t)oper;
+        switch (oper)
         {
-        case OpCode::REPORT_NUMBER_OF_RECORDS:
-            switch (oper)
-            {
-            case Operator::ALL_RECORDS:
-                buf[1] = (uint8_t)oper;
-                return _characteristic.setValue(buf, 2);
-                break;
-            default:
-                break;
-            }
+        case Operator::ALL_RECORDS:
+        case Operator::FIRST_RECORD:
+        case Operator::LAST_RECORD:
+        case Operator::NO_OPERATOR:
+            return _characteristic.setValue(buf, 2);
             break;
-        case OpCode::REPORT_STORED_RECORDS:
-            switch (oper)
-            {
-            case Operator::ALL_RECORDS:
-                buf[1] = (uint8_t)oper;
-                return _characteristic.setValue(buf, 2);
-                break;
-            
-            default:
-                break;
-            }
+        case Operator::GREATER_THAN_OR_EQUAL:
+        case Operator::LESS_THAN_OR_EQUAL:
+        case Operator::WITHIN_INCLUSIVE_RANGE:
+            buf[2] = (uint8_t)filterType;
+            memcpy(buf+3, operand, operand_size);
+            return _characteristic.setValue(buf, sizeof(buf));
+            break;
         default:
             break;
         }

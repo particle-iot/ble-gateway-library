@@ -41,8 +41,9 @@ void BleDeviceGateway::loop()
                 std::shared_ptr<BleDevice> ptr = _waitlist.takeFirst();
                 _connectedDevices.append(ptr);
                 _connected_count++;
-                ptr->onConnect();
+                ptr->onConnect();       // Call the onConnect() for the BLE Device
                 if(ptr->peer.connected()) {
+                    // if still connected, call the App's onConnect callback
                     if (_connectCallback != nullptr) _connectCallback(*ptr);
                 }
             }
@@ -57,6 +58,8 @@ void BleDeviceGateway::loop()
     {
         _connectedDevices.at(i)->loop();
         if (!_connectedDevices.at(i)->peer.connected() && !_connectedDevices.at(i)->pendingData()) {
+            // Check if disconnected device objects are still holding buffered data.
+            // If not, then we can remove it from the _connectedDevices vector.
             Log.trace("Remove device");
             _connectedDevices.removeAt(i);
         }
@@ -97,6 +100,7 @@ bool BleDeviceGateway::rotateDevice(BleDevice& device) const
 bool BleDeviceGateway::isAddressConnectable(const BleAddress& address) const
 {
     for (int idx = 0; idx < _connectedDevices.size(); idx++) {
+        // Check if there's already an object for the device with this address
         if (address == _connectedDevices.at(idx)->address) return false;
     }
     if (_allowlist.isEmpty() && _denylist.isEmpty()) return true;
@@ -119,10 +123,14 @@ int BleDeviceGateway::connectableService(const BleScanResult *scanResult) const
 {
     for (int idx = 0; idx < _enabledServices.size(); idx++) {
         if ( _enabledServices.at(idx).completeLocalName != nullptr ) {
+            // If the device is enabled by Local Name, check whether the scanned device has that name
+            // either in the advertisingData or the scanResponse data, as devices could include it in either one.
             if (scanResult->advertisingData().deviceName() == _enabledServices.at(idx).completeLocalName || scanResult->scanResponse().deviceName() == _enabledServices.at(idx).completeLocalName) {
                 return idx;
             }
         } else {
+            // Get the Service UUIDs from both the advertisingData and the scanResponse into
+            // a Vector to then check if it's in either of the enabled UUID lists.
             Vector<BleUuid> foundUuids = scanResult->advertisingData().serviceUUID();
             foundUuids.append(scanResult->scanResponse().serviceUUID());
             if ( _enabledServices.at(idx).stdService != 0) {
@@ -137,6 +145,11 @@ int BleDeviceGateway::connectableService(const BleScanResult *scanResult) const
 
 void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void *context)
 {
+    /*
+     * This is run on the BLE thread, so no other BLE APIs can be called. Instead of connecting
+     * to devices here, we instead add them to a waitlist, and then when the loop() is executed
+     * on the application thread, we'll check the waitlist to connect to devices.
+     */ 
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
     if (ctx->isAddressConnectable(scanResult->address()))
     {
@@ -166,6 +179,9 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
 
 void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
 {
+    /*
+     * This is run on the BLE thread, so no other BLE APIs can be called. 
+     */
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
     ctx->_connected_count--;
     Log.trace("Devices connected: %u", ctx->_connected_count);
@@ -173,6 +189,12 @@ void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
 
 void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
 {
+    /*
+     * This is not run on the BLE thread. You can call other BLE APIs here.
+     * For example, you might call BLE.rejectPairing() if you want to reject the pairing process.
+     * 
+     * This handles callbacks related to the pairing process.
+     */
     BleDeviceGateway* ctx = (BleDeviceGateway *)context;
     for (int i = 0; i < ctx->_connectedDevices.size(); i++)
     {
@@ -181,6 +203,10 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
             switch (event.type)
             {
             case BlePairingEventType::PASSKEY_DISPLAY:
+            /*
+             * When it's time to display the passkey, check if the Application has registered a callback
+             * to display the passkey. If not, then just print out the passkey into the log stream.
+             */
                 if (ctx->_passkeyDisplayCallback == nullptr)
                 {
                     char buf[event.payloadLen+1];
@@ -192,6 +218,19 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
                 }
                 break;
             case BlePairingEventType::PASSKEY_INPUT:
+            /*
+             * This handles when the pairing process requests a passkey input. If the application has
+             * registered a callback, then run that. The application can get the passkey, for example, from
+             * a keyboard or from a Particle.function() that allows the passkey to be entered from the cloud.
+             * 
+             * The application needs to send the 6-digit passkey back with something like:
+             * BLE.setPairingPasskey(peer, (uint8_t *)"000000");
+             * 
+             * If the application hasn't registered a callback, then it'll call passkeyInput() on the 
+             * BleDevice instance. By default, this will call BLE.rejectPairing(), so if you add a peripheral
+             * that always has the same passkey, you should override the passkeyInput() fuction when adding
+             * a new peripheral.
+             */
             {
                 Log.info("Passkey input");
                 if (ctx->_passkeyInputCallback == nullptr) {
@@ -202,11 +241,11 @@ void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)
             }
                 break;
             case BlePairingEventType::STATUS_UPDATED:
-                if (event.payload.status.status == BLE_GAP_SEC_STATUS_SUCCESS) {
-                    ctx->_connectedDevices.at(i)->onPair();
-                } else {
-                    Log.info("Pairing failed with code: %d", event.payload.status.status);
-                }
+            /*
+             * This is called when pairing is done. If successful, it'll call the BleDevice instance's onPair()
+             * function. Override this on a new peripheral if you want something to happen after pairing.
+             */
+                ctx->_connectedDevices.at(i)->onPair(event.payload.status.status);
                 break;
             default:
                 break;

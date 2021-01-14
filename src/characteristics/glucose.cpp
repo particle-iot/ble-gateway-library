@@ -14,10 +14,8 @@ void GlucoseMeasurement::onDataReceived(const uint8_t *data, size_t len, const B
         position += 7;
     }
     if (ctx->_flags & GlucoseMeasurementFlags::TIME_OFFSET_PRESENT && len > (position + 1)) {
-        ctx->_time_offset = data[position+1] << 8 | data[position];
+        ctx->_time_offset = (int16_t)(data[position+1] << 8 | data[position]);
         position += 2;
-    } else {
-        ctx->_time_offset = 0;
     }
     if (ctx->_flags & GlucoseMeasurementFlags::CONCENTRATION_TYPE_LOCATION_PRESENT && len > (position + 2)) {
         ctx->_concentration = data[position+1] << 8 | data[position];
@@ -53,4 +51,32 @@ uint8_t GlucoseMeasurement::units() const {
 
 uint16_t GlucoseMeasurement::sequence() const { return _sequence_number; };
 
-int GlucoseMeasurement::getConcentration(float& gl) const {return ieee11073_20601a_sfloat(_concentration, gl);}
+int GlucoseMeasurement::getConcentration(float& gl) const {
+    return ieee11073_20601a_sfloat(_concentration, gl);
+}
+
+DateTimeChar::DateTime GlucoseMeasurement::getTime() const {
+    return dateTime + _time_offset;
+}
+
+GlucoseMeasurement::Type GlucoseMeasurement::getType() const {
+    return (GlucoseMeasurement::Type)(_type_location & 0xf);
+}
+
+GlucoseMeasurement::Location GlucoseMeasurement::getLocation() const {
+    return (GlucoseMeasurement::Location)((_type_location & 0xf0) >> 4);
+}
+
+void RecordAccessControlPoint::onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context) {
+    RecordAccessControlPoint* ctx = (RecordAccessControlPoint *)context;
+    ctx->responseCode = (len > 2) ? (OpCode)data[0] : OpCode::RESERVED_FUTURE_USE;
+    if (ctx->responseCode == OpCode::RESPONSE_NUMBER_OF_RECORDS) {
+        ctx->numberOfRecords = data[1] << 8 | data[2];
+    }
+    else if ( ctx->responseCode == OpCode::RESPONSE_CODE ) {
+        ctx->requestCode = (OpCode)data[1];
+        ctx->responseCodeValue = (ResponseCodeValues)data[2];
+    }
+
+    if (ctx->_notifyNewData != nullptr) (ctx->_notifyNewData)(ctx->_characteristic.UUID(), ctx->_notifyContext);
+}

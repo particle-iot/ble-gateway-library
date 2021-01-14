@@ -55,6 +55,18 @@ public:
   void onPasskeyInput(BlePasskeyInput callback) {_passkeyInputCallback = callback;};
   void loop();
 
+  /**
+   * Enable the services that the Gateway will be able to connect to. You can enable by:
+   * 
+   * enableServiceByName: this is for devices that advertise by a Local Name, instead of by
+   * advertising a primary service.
+   * 
+   * enableServiceCustom: this is for devices that advertise a primary service that uses
+   * a custom UUID.
+   * 
+   * enableService: this is for devices that advertise a primary service that uses a
+   * UUID defined by the Bluetooth SIG.
+   */
   void enableServiceByName(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char* completeName);
   void enableServiceCustom(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, const char *customService);
   void enableService(BleDeviceGatewayDevicePtrGen bleDevicePtrGen, uint16_t sigService);

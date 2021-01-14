@@ -61,7 +61,13 @@ public:
     /**
      * Called when pairing is complete.
      */
-    virtual void onPair() {Log.info("Pairing succeeded");};
+    virtual void onPair(int status) {
+        if (status == BLE_GAP_SEC_STATUS_SUCCESS) {
+            Log.info("Pairing succeeded");
+        } else {
+            Log.info("Pairing failed with code: %d", status);
+        }
+    };
     /**
      * This will be called when passkey input is required by the peripheral, and the Application
      * hasn't set a callback to enter a passkey.
