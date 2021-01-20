@@ -8,6 +8,7 @@ class GlucoseService
 {
 private:
     std::unique_ptr<GlucoseMeasurement> _gMeasurement;
+    std::unique_ptr<GlucoseMeasurementContext> _gContext;
     std::unique_ptr<GlucoseFeatureChar> _gFeature;
     std::unique_ptr<RecordAccessControlPoint> _racp;
     BlePeerDevice _peer;
@@ -19,6 +20,7 @@ public:
      */
     std::unique_ptr<RecordAccessControlPoint>& racp() {return _racp;}
     std::unique_ptr<GlucoseMeasurement>& gl() {return _gMeasurement;}
+    std::unique_ptr<GlucoseMeasurementContext>& glContext() {return _gContext;}
     /**
      *  Register callback for when new data is available
      */

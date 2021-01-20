@@ -14,7 +14,6 @@ BleDeviceGateway *BleDeviceGateway::_instance = nullptr;
 void BleDeviceGateway::setup(BlePairingIoCaps capabilities)
 {
     _scan_period = 10;
-    BLE.onDisconnected(onDisconnected, this);
     BLE.setPairingIoCaps(capabilities);
     BLE.onPairingEvent(onPairing, this);
 }
@@ -54,10 +53,16 @@ void BleDeviceGateway::loop()
             }
         }
     }
+    _connected_count = 0;
     for (int i = 0; i < _connectedDevices.size(); i++)
     {
         _connectedDevices.at(i)->loop();
-        if (!_connectedDevices.at(i)->peer.connected() && !_connectedDevices.at(i)->pendingData()) {
+        if (_connectedDevices.at(i)->peer.connected()) {
+            // Count the number of connected devices, so that we don't try to connect if
+            // the max is reached (connect attempt is on the next loop)
+            _connected_count++;
+        }
+        else if (!_connectedDevices.at(i)->pendingData()) {
             // Check if disconnected device objects are still holding buffered data.
             // If not, then we can remove it from the _connectedDevices vector.
             Log.trace("Remove device");
@@ -175,16 +180,6 @@ void BleDeviceGateway::scanResultCallback(const BleScanResult *scanResult, void 
             }
         }
     }
-}
-
-void BleDeviceGateway::onDisconnected(const BlePeerDevice &peer, void *context)
-{
-    /*
-     * This is run on the BLE thread, so no other BLE APIs can be called. 
-     */
-    BleDeviceGateway* ctx = (BleDeviceGateway *)context;
-    ctx->_connected_count--;
-    Log.trace("Devices connected: %u", ctx->_connected_count);
 }
 
 void BleDeviceGateway::onPairing(const BlePairingEvent &event, void *context)

@@ -137,6 +137,7 @@ for that type of peripheral. Note that if the type of peripheral doesn't overrid
 * [Tracker Bike Speed and Heart Rate](examples/tracker-bike_speed-heartrate): use a Bicycle Speed sensor and a Heart Rate monitor to track your speed and heart rate as you bike around town.
 * [Read OBD2 on Tracker with Veepeak OBDCheck BLE+](examples/veepeak): use an OBD2 BLE dongle to read CAN parameters from your car and track speed, RPM, and engine temperature associated with your car's location.
 * [Remotely view and control a food smoker](examples/masterbuilt-smoker): view the temperature of food and smoker, as well as remotely change the temperature and timer.
+* [Get readings from Glucose Monitors](examples/glucose-meter): get the readings from a glucose meter and publish the last 5 to the cloud.
 
 ## Library Design
 

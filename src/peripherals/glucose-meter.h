@@ -3,18 +3,18 @@
 #include "services/device_information_service.h"
 #include "services/battery_service.h"
 
-class GlucoseMonitor;
+class GlucoseMeter;
 
 /**
  * The callback function format
  * 
- * monitor: instance of GlucoseMonitor
+ * meter: instance of GlucoseMeter
  * uuid: the UUID of the characteristic that sent a NOTIFY/INDICATE
  * context: the pointer that is passed when setNewValueCallback is called
  */
-typedef void (*NewGlucoseCallback)(GlucoseMonitor& monitor, BleUuid uuid, void* context);
+typedef void (*NewGlucoseCallback)(GlucoseMeter& meter, BleUuid uuid, void* context);
 
-class GlucoseMonitor: public BleDevice
+class GlucoseMeter: public BleDevice
 {
 public:
     struct Measurement
@@ -28,11 +28,10 @@ public:
     };
     
     void onConnect() override;
-    void loop() override;
     bool pendingData() override;
     BleUuid getType() final {return BleUuid(BLE_SIG_UUID_GLUCOSE_SVC);}
     static std::shared_ptr<BleDevice> bleDevicePtr(const BleScanResult* scanResult) {
-        return std::make_shared<GlucoseMonitor>(scanResult->address());
+        return std::make_shared<GlucoseMeter>(scanResult->address());
     }
     /**
      * Blocking call to request and return the number of stored records. Since it
@@ -40,7 +39,7 @@ public:
      * 
      * @return Number of stored records. Negative if there's an error (like timeout)
      */
-    int getNumberStoredRecords(uint16_t timeout_ms = 3000);
+    int getNumberStoredRecords(uint16_t timeout_ms = 5000);
     /**
      * Blocking call to request and return Glucose measurements from the device.
      * Since it blocks until receives the response, there is no callback.
@@ -52,8 +51,9 @@ public:
      * IMPORTANT: make sure to call flushBuffer() after gathering the data,
      * otherwise it won't reconnect to the same device.
      */
-    Vector<Measurement>& getMeasurements(uint16_t timeout_ms = 3000);
-    Vector<Measurement>& getMeasurements(RecordAccessControlPoint::Operator oper, uint16_t min, uint16_t timeout_ms = 3000);
+    Vector<Measurement>& getMeasurements(uint16_t timeout_ms = 5000);
+    Vector<Measurement>& getMeasurements(RecordAccessControlPoint::Operator oper, uint16_t min, uint16_t timeout_ms = 5000);
+    Vector<Measurement>& getMeasurements(uint16_t min, uint16_t max, uint16_t timeout_ms = 5000);
     void flushBuffer();
     /**
      * Returns the glucose measurements that were previously received. No new request
@@ -74,8 +74,8 @@ public:
      */
     void setNewValueCallback(NewGlucoseCallback callback, void* context);
     
-    GlucoseMonitor(BleAddress addr);
-    ~GlucoseMonitor();
+    GlucoseMeter(BleAddress addr);
+    ~GlucoseMeter();
 private:
     std::unique_ptr<GlucoseService> _gService;
     std::unique_ptr<DeviceInformationService> _disService;

@@ -11,6 +11,10 @@ void GlucoseService::onConnect()
                     _gMeasurement = std::make_unique<GlucoseMeasurement>(ch);
                     _gMeasurement->onConnect();
                     break;
+                case BLE_SIG_GLUCOSE_MEASUREMENT_CONTEXT_CHAR:
+                    _gContext = std::make_unique<GlucoseMeasurementContext>(ch);
+                    _gContext->onConnect();
+                    break;
                 case BLE_SIG_GLUCOSE_FEATURE_CHAR:
                     _gFeature = std::make_unique<GlucoseFeatureChar>(ch);
                     break;
@@ -27,5 +31,6 @@ void GlucoseService::onConnect()
 
 void GlucoseService::setNewValueCallback(void (*callback)(BleUuid, void*), void* context) {
     if (_gMeasurement != nullptr) _gMeasurement->notifyCallback(callback, context);
+    if (_gContext != nullptr) _gContext->notifyCallback(callback, context);
     if (_racp != nullptr) _racp->notifyCallback(callback, context);
 }

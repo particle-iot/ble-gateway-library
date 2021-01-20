@@ -92,6 +92,7 @@ public:
    */
   int onConnectCallback(BleDeviceGatewayConnection callback) {_connectCallback = callback; return 0;};
   void addToAllowList(BleAddress address) {_allowlist.append(address);};
+  void addToDenyList(BleAddress address) {_denylist.append(address); }
 
 private:
   struct EnabledService {
@@ -107,7 +108,6 @@ private:
   uint16_t _scan_period;
   uint8_t _connected_count;
   static void scanResultCallback(const BleScanResult *scanResult, void *context);
-  static void onDisconnected(const BlePeerDevice &peer, void *context);
   static void onPairing(const BlePairingEvent &event, void *context);
   BlePasskeyDisplay _passkeyDisplayCallback;
   BlePasskeyInput _passkeyInputCallback;

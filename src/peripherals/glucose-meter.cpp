@@ -1,11 +1,11 @@
-#include "glucose-monitor.h"
+#include "glucose-meter.h"
 
-GlucoseMonitor::GlucoseMonitor(BleAddress addr): BleDevice{addr}
+GlucoseMeter::GlucoseMeter(BleAddress addr): BleDevice{addr}
 {
     os_semaphore_create(&_blockSemaphore, 1, 0);
 }
 
-GlucoseMonitor::~GlucoseMonitor()
+GlucoseMeter::~GlucoseMeter()
 {
     if (_blockSemaphore) {
         os_semaphore_destroy(_blockSemaphore);
@@ -13,7 +13,7 @@ GlucoseMonitor::~GlucoseMonitor()
     }
 }
 
-void GlucoseMonitor::onConnect()
+void GlucoseMeter::onConnect()
 {
     peer.discoverAllServices();
     for (auto& serv: peer.services()) {
@@ -45,16 +45,12 @@ void GlucoseMonitor::onConnect()
     BLE.startPairing(peer);
 }
 
-void GlucoseMonitor::loop() {
-
-}
-
-bool GlucoseMonitor::pendingData() {
+bool GlucoseMeter::pendingData() {
     return !glValues.isEmpty();
 }
 
-void GlucoseMonitor::_onNewValue(BleUuid uuid, void* context) {
-    GlucoseMonitor* ctx = (GlucoseMonitor *)context;
+void GlucoseMeter::_onNewValue(BleUuid uuid, void* context) {
+    GlucoseMeter* ctx = (GlucoseMeter *)context;
     if (uuid == BLE_SIG_RECORD_ACCESS_CONTROL_CHAR) {
         os_semaphore_give(ctx->_blockSemaphore, false);
     }
@@ -77,13 +73,13 @@ void GlucoseMonitor::_onNewValue(BleUuid uuid, void* context) {
     }
 }
 
-void GlucoseMonitor::setNewValueCallback(NewGlucoseCallback callback, void* context) {
+void GlucoseMeter::setNewValueCallback(NewGlucoseCallback callback, void* context) {
     _callback = callback;
     _callbackContext = context;
     if (_battService != nullptr) _battService->setNewValueCallback(_onNewValue, this);
 }
 
-int GlucoseMonitor::getNumberStoredRecords(uint16_t timeout_ms) {
+int GlucoseMeter::getNumberStoredRecords(uint16_t timeout_ms) {
     if (!_gService || !_gService->racp()) return -14;
     /*
      * Glucose Profile requires to write to the RACP Characteristic, and then wait for the notification.
@@ -102,24 +98,31 @@ int GlucoseMonitor::getNumberStoredRecords(uint16_t timeout_ms) {
     return _gService->racp()->numberOfRecords;
 }
 
-Vector<GlucoseMonitor::Measurement>& GlucoseMonitor::getMeasurements(uint16_t timeout_ms) {
+Vector<GlucoseMeter::Measurement>& GlucoseMeter::getMeasurements(uint16_t timeout_ms) {
     int ret = requestMeasurements(timeout_ms, RecordAccessControlPoint::Operator::ALL_RECORDS);
     if (ret != 1) Log.error("Error reading measurements from Glucose Monitor: %d", ret);
     return glValues;
 }
 
-Vector<GlucoseMonitor::Measurement>& GlucoseMonitor::getMeasurements(RecordAccessControlPoint::Operator oper, uint16_t min, uint16_t timeout_ms) {
+Vector<GlucoseMeter::Measurement>& GlucoseMeter::getMeasurements(RecordAccessControlPoint::Operator oper, uint16_t min, uint16_t timeout_ms) {
     uint8_t operand[2] = {(uint8_t)(min & 0xff), (uint8_t)( (min & 0xff00) >> 8)};
     int ret = requestMeasurements(timeout_ms, oper, RecordAccessControlPoint::FilterType::SEQUENCE_NUMBER, operand, 2);
     if (ret != 1) Log.error("Error reading measurements from Glucose Monitor: %d", ret);
     return glValues;
 }
 
-void GlucoseMonitor::flushBuffer() { glValues.clear(); }
+Vector<GlucoseMeter::Measurement>& GlucoseMeter::getMeasurements(uint16_t min, uint16_t max, uint16_t timeout_ms) {
+    uint8_t operand[4] = {(uint8_t)(min & 0xff), (uint8_t)( (min & 0xff00) >> 8), (uint8_t)(max & 0xff), (uint8_t)( (max & 0xff00) >> 8)};
+    int ret = requestMeasurements(timeout_ms, RecordAccessControlPoint::Operator::WITHIN_INCLUSIVE_RANGE, RecordAccessControlPoint::FilterType::SEQUENCE_NUMBER, operand, 4);
+    if (ret != 1) Log.error("Error reading measurements from Glucose Monitor: %d", ret);
+    return glValues;
+}
 
-Vector<GlucoseMonitor::Measurement>& GlucoseMonitor::getBufferedMeasurements() { return glValues; }
+void GlucoseMeter::flushBuffer() { glValues.clear(); }
 
-int GlucoseMonitor::requestMeasurements(uint16_t timeout_ms, RecordAccessControlPoint::Operator oper, RecordAccessControlPoint::FilterType filterType, uint8_t* operand, uint8_t operand_size) {
+Vector<GlucoseMeter::Measurement>& GlucoseMeter::getBufferedMeasurements() { return glValues; }
+
+int GlucoseMeter::requestMeasurements(uint16_t timeout_ms, RecordAccessControlPoint::Operator oper, RecordAccessControlPoint::FilterType filterType, uint8_t* operand, uint8_t operand_size) {
     /*
      * Glucose Profile requires to write to the RACP Characteristic, and then wait for the notification.
      * Since it's command/response instead of constant (or unprompted) notifications, and in order to 
@@ -133,6 +136,6 @@ int GlucoseMonitor::requestMeasurements(uint16_t timeout_ms, RecordAccessControl
     return (int)_gService->racp()->responseCodeValue;
 }
 
-int GlucoseMonitor::getBatteryLevel() {
+int GlucoseMeter::getBatteryLevel() {
     return _battService ? _battService->getBatteryLevel() : -14;
 }

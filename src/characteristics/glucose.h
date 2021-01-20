@@ -26,7 +26,7 @@ public:
         GENERAL_DEVICE_FAULT                    = 0x400,
         TIME_FAULT_MAY_BE_INACCURATE            = 0x800
     };
-    enum GlucoseMeasurementFlags: uint8_t {
+    enum Flags: uint8_t {
         NONE                                    = 0,
         TIME_OFFSET_PRESENT                     = 0x01,
         CONCENTRATION_TYPE_LOCATION_PRESENT     = 0x02,
@@ -63,12 +63,12 @@ public:
     DateTimeChar::DateTime getTime() const;
     Type getType() const;
     Location getLocation() const;
-    GlucoseMeasurement(BleCharacteristic& ch): _characteristic(ch), _flags(GlucoseMeasurementFlags::NONE) {}
+    GlucoseMeasurement(BleCharacteristic& ch): _characteristic(ch), _flags(Flags::NONE) {}
     ~GlucoseMeasurement() {};
 protected:
     static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
     BleCharacteristic _characteristic;
-    GlucoseMeasurementFlags _flags;
+    Flags _flags;
     DateTimeChar::DateTime dateTime;
     Annunciation _annunciation;
     uint16_t _sequence_number, _concentration;
@@ -79,10 +79,79 @@ protected:
 };
 
 class GlucoseMeasurementContext {
-private:
-    BleCharacteristic& _characteristic;
 public:
-    GlucoseMeasurementContext(BleCharacteristic& ch): _characteristic(ch) {};
+    enum Flags: uint8_t {
+        NONE                                = 0,
+        CARBOHYDRATE_ID_PRESENT             = 0x01,
+        MEAL_PRESENT                        = 0x02,
+        TESTER_HEALTH_PRESENT               = 0x04,
+        EXERCISE_DURATION_AND_INTENSITY     = 0x08,
+        MEDICATION_ID_PRESENT               = 0x10,
+        MEDICATION_VALUE_UNITS              = 0x20,
+        HBA1C_PRESENT                       = 0x40,
+        EXTENDED_FLAGS_PRESENT              = 0x80
+    };
+    enum ExtendedFlags: uint8_t {
+        NONE_EXTENDED                       = 0
+    };
+    enum class CarbID: uint8_t {
+        RESERVED_FUTURE_USE                 = 0,
+        BREAKFAST                           = 1,
+        LUNCH                               = 2,
+        DINNER                              = 3,
+        SNACK                               = 4,
+        DRINK                               = 5,
+        SUPPER                              = 6,
+        BRUNCH                              = 7
+    };
+    enum class Meal: uint8_t {
+        RESERVED_FUTURE_USE                 = 0,
+        BEFORE_MEAL                         = 1,
+        AFTER_MEAL                          = 2,
+        FASTING                             = 3,
+        CASUAL                              = 4,
+        BEDTIME                             = 5
+    };
+    enum Tester: uint8_t {
+        TESTER_RESERVED                     = 0,
+        SELF                                = 1,
+        HEALTH_CARE_PROFESSIONAL            = 2,
+        LAB_TEST                            = 3,
+        TESTER_VALUE_NOT_AVAILABLE          = 4
+    };
+    enum Health: uint8_t {
+        HEALTH_RESERVED                     = 0,
+        MINOR_HEALTH_ISSUES                 = 1,
+        MAJOR_HEALTH_ISSUES                 = 2,
+        DURING_MENSES                       = 3,
+        UNDER_STRESS                        = 4,
+        NO_HEALTH_ISSUES                    = 5,
+        HEALTH_VALUE_NOT_AVAILABLE          = 6
+    };
+    enum class MedicationID: uint8_t {
+        RESERVED_FUTURE_USE                 = 0,
+        RAPID_ACTING_INSULIN                = 1,
+        SHORT_ACTING_INSULIN                = 2,
+        INTERMEDIATE_ACTING_INSULIN         = 3,
+        LONG_ACTING_INSULIN                 = 4,
+        PRE_MIXED_INSULIN                   = 5
+    };
+    void onConnect();
+    void notifyCallback(void (*callback)(BleUuid, void*), void* context);
+    GlucoseMeasurementContext(BleCharacteristic& ch): _characteristic(ch), _flags(Flags::NONE) {};
+    ~GlucoseMeasurementContext() {};
+protected:
+    static void onDataReceived(const uint8_t *data, size_t len, const BlePeerDevice &peer, void *context);
+    BleCharacteristic& _characteristic;
+    Flags _flags;
+    ExtendedFlags _extendedFlags;
+    uint16_t _sequence_number, _carbKG, _exercise_duration, _medicationAmount, _hba1c;
+    uint8_t _tester_health, _exercise_intensity;
+    CarbID _carbID;
+    Meal _meal;
+    MedicationID _medicationID;
+    void (*_notifyNewData)(BleUuid, void*);
+    void* _notifyContext;
 };
 
 class GlucoseFeatureChar {
